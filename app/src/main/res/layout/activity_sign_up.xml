@@ -40,7 +40,8 @@
             android:layout_marginTop="44dp"
             android:background="@drawable/usernameregissss"
             android:paddingLeft="60dp"
-            android:hint="Nama"/>
+            android:hint="Nama"
+            android:textColorHint="#d0d0d0"/>
 
         <EditText
             android:id="@+id/email"
@@ -52,6 +53,7 @@
             android:background="@drawable/emailregis"
             android:paddingLeft="60dp"
             android:hint="Email"
+            android:textColorHint="#d0d0d0"
             android:inputType="textEmailAddress" />
 
 
@@ -65,7 +67,8 @@
             android:background="@drawable/passwordregis"
             android:hint="Password"
             android:inputType="textPassword"
-            android:paddingLeft="60dp"/>
+            android:paddingLeft="60dp"
+            android:textColorHint="#d0d0d0"/>
 
         <Button
             android:id="@+id/buttonregister"
@@ -100,7 +103,7 @@
             android:textStyle="bold"
             android:textSize="15sp"
             android:layout_marginTop="20dp"
-            android:onClick="Register"/>
+            android:onClick="Login"/>
 
 
 
