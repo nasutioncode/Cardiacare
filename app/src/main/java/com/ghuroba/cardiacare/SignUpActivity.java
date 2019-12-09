@@ -230,15 +230,15 @@ public class SignUpActivity extends AppCompatActivity {
 //
 //
 //
-//    public void Login(View view) {
-//        startActivity(new Intent(SignUpActivity.this, SigInActivity.class));
-//        customType(SignUpActivity.this, "bottom-to-top");
-//
-////        *left-to-right
-////                *right-to-left
-////                *bottom-to-up
-////                *up-to-bottom
-////                *fadein-to-fadeout
-////                *rotateout-to-rotatein
-//    }
+    public void Login(View view) {
+        startActivity(new Intent(SignUpActivity.this, SigInActivity.class));
+        customType(SignUpActivity.this, "bottom-to-top");
+
+//        *left-to-right
+//                *right-to-left
+//                *bottom-to-up
+//                *up-to-bottom
+//                *fadein-to-fadeout
+//                *rotateout-to-rotatein
+   }
 }
