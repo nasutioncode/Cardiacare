@@ -38,7 +38,7 @@ public class SigInActivity extends AppCompatActivity {
 
 
         mFirebaseAuth = FirebaseAuth.getInstance();
-        usernamex = findViewById(R.id.username);
+        usernamex = findViewById(R.id.nama);
         emailx = findViewById(R.id.emaillogin);
         passwordx = findViewById(R.id.passwordlogin);
         butonloginx = findViewById(R.id.buttonlogin);

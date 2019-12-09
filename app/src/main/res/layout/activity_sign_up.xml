@@ -32,7 +32,7 @@
             android:layout_marginRight="20dp"/>
 
         <EditText
-            android:id="@+id/username"
+            android:id="@+id/nama"
             android:layout_width="match_parent"
             android:layout_height="62dp"
             android:layout_marginLeft="30dp"

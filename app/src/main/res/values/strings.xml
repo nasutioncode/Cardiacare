@@ -1,3 +1,62 @@
 <resources>
-    <string name="app_name">Cardiacare</string>
+    <string name="app_name">carecardia</string>
+    <string name="title_activity_home">Home</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_tools">Tools</string>
+    <string name="menu_share">Share</string>
+    <string name="menu_send">Send</string>
+
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="title_formJantung">Cek Potensi Risiko Penyakit Jantung</string>
+    <string name="label_formDate">Tanggal</string>
+    <string name="date_formJantung">DD/MM/YYYYY</string>
+    <string name="label_diabetes">Apakah anda terkena diabetes?</string>
+    <string name="radio_diabetesYes">IYA</string>
+    <string name="radio_diabetesNo">TIDAK</string>
+    <string name="label_rokok">Apakah anda Perokok?</string>
+    <string name="radio_rokokYes">IYA</string>
+    <string name="radio_rokokNo">TIDAK</string>
+    <string name="label_kelamin">JENIS KELAMIN</string>
+    <string name="label_usia">USIA</string>
+    <string name="text_kelamin">laki/perempuan</string>
+    <string name="text_usia">Masukkan Usia</string>
+    <string name="text_tensi">Masukkan Tekanan Darah</string>
+    <string name="label_kolesterol">Jumlah kolesterol?</string>
+    <string-array name="labels_kolesterol">
+        <item>4 = 154,44 mg/dL</item>
+        <item>5 = 193,05 mg/dL</item>
+        <item>6 = 231,66 mg/dL</item>
+        <item>7 = 270,27 mg/dL</item>
+        <item>8 = 308,88 mg/dL</item>
+    </string-array>
+    <string name="button_hasil">LIHAT HASIL</string>
+
+    <string name="title_hasilJantung">Hasil Cek Potensi Risiko Jantung</string>
+    <string name="date_hasilJantung">DD/MM/YYYY</string>
+    <string name="label_hasilRisiko">Tingkat Risiko Terkena Jantung</string>
+    <string name="text_hasilRisiko"><![CDATA[< 10]]></string>
+    <string name="label_hasilPenjelasan1">Tingkat risiko terkena penyakit jantung anda memasuki kategori</string>
+    <string name="text_hasilPenjelasan">sangat baik.</string>
+    <string name="label_hasilPenjelasan2">Klik detail untuk mengetahui lebih lanjut.</string>
+    <string name="button_hasilDetail">Detail</string>
+
+
+
+    <string name="input_error_name">name required</string>
+    <string name="input_error_email">email required</string>
+    <string name="input_error_password">password required</string>
+    <string name="input_error_password_length">password should be atleast 6 characters long</string>
+    <string name="input_error_email_invalid">enter a valid email</string>
+    <string name="registration_success">Registered Successfully</string>
 </resources>
