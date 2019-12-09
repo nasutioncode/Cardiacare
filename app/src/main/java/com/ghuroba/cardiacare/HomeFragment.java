@@ -12,11 +12,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import com.google.firebase.auth.FirebaseAuth;
-
 public class HomeFragment extends Fragment {
 
     CardView diagnosa_card;
+    CardView history_card;
     Activity context;
     Button butt;
 
@@ -37,14 +36,25 @@ public class HomeFragment extends Fragment {
         super.onStart();
 
         diagnosa_card = (CardView) context.findViewById(R.id.diag_card);
+        history_card = (CardView) context.findViewById(R.id.his_card);
 
         diagnosa_card.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent inToLoginPage = new Intent(context, coba.class);
+                Intent inToLoginPage = new Intent(context, CreateDiagnosaActivity.class);
                 startActivity(inToLoginPage);
             }
         });
+
+        history_card.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent inToHistory = new Intent(context, HasilDiagnosaJantungActivity.class);
+                startActivity(inToHistory);
+            }
+        });
+
+
     }
 
 

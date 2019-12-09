@@ -73,6 +73,7 @@
     </android.support.v7.widget.CardView>
 
     <android.support.design.card.MaterialCardView
+        android:id="@+id/his_card"
         android:layout_width="match_parent"
         android:layout_height="163dp"
         android:layout_marginTop="20dp"
