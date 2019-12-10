@@ -9,22 +9,29 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".CreateDiagnosaActivity"
+        <activity android:name=".detail"></activity>
+        <activity
+            android:name=".history"
             android:theme="@style/AppThemeFullScreen"></activity>
         <activity
+            android:name=".CreateDiagnosaActivity"
+            android:theme="@style/AppThemeFullScreen" />
+        <activity
             android:name=".SigInActivity"
-            android:theme="@style/AppThemeFullScreen"></activity>
+            android:theme="@style/AppThemeFullScreen" />
         <activity
             android:name=".SignUpActivity"
             android:theme="@style/AppThemeFullScreen" />
         <activity
             android:name=".MainActivity"
             android:theme="@style/AppThemeFullScreen">
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
 
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
+            <!-- <intent-filter> -->
+            <!-- <action android:name="android.intent.action.MAIN" /> -->
+
+
+            <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+            <!-- </intent-filter> -->
         </activity>
         <activity android:name=".IntroActivity">
             <intent-filter>
@@ -33,6 +40,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".HasilDiagnosaJantungActivity" />
     </application>
 
 </manifest>
