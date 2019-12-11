@@ -57,7 +57,7 @@ public class ProfilFragment extends Fragment {
     String profilImageUri;
     Button txtclose;
     Dialog fbDialogue;
-    TextView nama, email;
+    EditText nama, email;
 
     FirebaseAuth mAuth;
 
@@ -84,8 +84,8 @@ public class ProfilFragment extends Fragment {
 
 
 
-        nama = (TextView)context.findViewById(R.id.baca_nama);
-        email = (TextView)context.findViewById(R.id.baca_email);
+        nama = (EditText) context.findViewById(R.id.baca_nama);
+        email = (EditText) context.findViewById(R.id.baca_email);
         //foto = (ImageView)context.findViewById(R.id.profilPhoto);
         imageView = (ImageView)context.findViewById(R.id.profilPhoto);
         progressBar = (ProgressBar)context.findViewById(R.id.progresBar);
@@ -98,7 +98,6 @@ public class ProfilFragment extends Fragment {
         bt_logout = (Button)context.findViewById(R.id.logout);
         bt_edit = (Button)context.findViewById(R.id.Edit);
         bt_delete = (Button)context.findViewById(R.id.Delete);
-        bt_baca = (Button)context.findViewById(R.id.baca);
         //txtclose =(Button) context.findViewById(R.id.txtclose);
 
         bt_logout.setOnClickListener(new View.OnClickListener() {
@@ -134,14 +133,14 @@ public class ProfilFragment extends Fragment {
             }
         });
 
-        bt_baca.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                loadUserInformation();
-            }
-        });
+//        bt_baca.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                loadUserInformation();
+//            }
+//        });
 
-        //loadUserInformation();
+        loadUserInformation();
     }
 
 
@@ -177,8 +176,7 @@ public class ProfilFragment extends Fragment {
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "User account deleted.");
-                            Intent intent = new Intent(context, SigInActivity.class);
-                            startActivity(intent);
+
                         }
                     }
                 });
@@ -186,6 +184,9 @@ public class ProfilFragment extends Fragment {
 
         DatabaseReference dbNode = FirebaseDatabase.getInstance().getReference().getRoot().child("Users").child(uid);
         dbNode.setValue(null);
+
+        Intent intent = new Intent(context, SigInActivity.class);
+        startActivity(intent);
 
         // [END delete_user]
     }

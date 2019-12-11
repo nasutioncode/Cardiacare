@@ -92,13 +92,12 @@ public class EditProfile extends AppCompatActivity {
             return;
         }
 
-
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null && profilImageUri != null) {
             UserProfileChangeRequest profile = new UserProfileChangeRequest.Builder()
                     .setDisplayName(displayName)
-//                    .setDisplayEmail(displayEmail)
+                    //.setDisplayEmail(displayEmail)
                     .setPhotoUri(Uri.parse(profilImageUri))
                     .build();
 
@@ -107,6 +106,8 @@ public class EditProfile extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             Toast.makeText(EditProfile.this, "Profile Updated", Toast.LENGTH_SHORT).show();
+//                            Intent toProfilFragment = new Intent(context, ProfilFragment.class);
+//                            startActivity(toProfilFragment);
                         }
                     });
         }
