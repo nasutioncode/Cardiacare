@@ -240,5 +240,5 @@ public class SignUpActivity extends AppCompatActivity {
 //                *up-to-bottom
 //                *fadein-to-fadeout
 //                *rotateout-to-rotatein
-   }
+    }
 }
