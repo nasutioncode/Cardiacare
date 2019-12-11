@@ -80,7 +80,8 @@ public class SigInActivity extends AppCompatActivity {
                             if (!task.isSuccessful()) {
                                 Toast.makeText(SigInActivity.this, "Email and Password not Registered", Toast.LENGTH_SHORT).show();
                             }else {
-                                Intent inTohome = new Intent(SigInActivity.this, MainActivity.class);
+                                finish();
+                                Intent inTohome = new Intent(SigInActivity.this, HomeFragment.class);
                                 startActivity(inTohome);
                             }
                         }

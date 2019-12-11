@@ -41,10 +41,18 @@
         >
 
         <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
+            android:id="@+id/profilPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_gravity="center"
             android:src="@drawable/ic_menu_profil"/>
+
+        <ProgressBar
+            android:visibility="gone"
+            android:id="@+id/progresBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"/>
 
     </android.support.v7.widget.CardView>
 
@@ -77,8 +85,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_weight="1"
-                    android:layout_marginLeft="30dp"
+                    android:layout_weight="2"
+                    android:layout_marginLeft="10dp"
                     >
 
                     <TextView
@@ -86,63 +94,42 @@
                         android:layout_height="wrap_content"
                         android:textColor="#000"
                         android:text="Name"
-                        android:textSize="19sp"/>
+                        android:textSize="19sp"
+                        android:layout_marginBottom="10dp"/>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#000"
-                        android:text="Age"
-                        android:textSize="19sp"/>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#000"
-                        android:text="Sex"
-                        android:textSize="19sp"/>
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="#000"
                         android:text="Email"
-                        android:textSize="19sp"/>
+                        android:textSize="19sp"
+                        android:layout_marginBottom="10dp"/>
                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    >
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="#000"
                         android:text="Nasution"
-                        android:textSize="19sp"/>
+                        android:textSize="19sp"
+                        android:id="@+id/baca_nama"
+                        android:layout_marginBottom="10dp"/>
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="#000"
-                        android:text="20 Years Old"
-                        android:textSize="19sp"/>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#000"
-                        android:text="Male"
-                        android:textSize="19sp"/>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#000"
-                        android:text="nasutioncode@gmail.com"
-                        android:textSize="19sp"/>
+                        android:text="nasution@gmail.com"
+                        android:textSize="19sp"
+                        android:id="@+id/baca_email"/>
                 </LinearLayout>
 
 
@@ -171,11 +158,37 @@
 
                 <Button
 
+                    android:id="@+id/Delete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hapus"
+                    android:background="#d03"
+                    android:textColor="#fff"
+                    android:textStyle="bold"
+                    android:layout_weight="1"
+                    android:layout_margin="20dp"
+                    />
+
+                <Button
+
                     android:id="@+id/logout"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Logout"
-                    android:background="#f03"
+                    android:background="#203050"
+                    android:textColor="#fff"
+                    android:textStyle="bold"
+                    android:layout_weight="1"
+                    android:layout_margin="20dp"
+                    />
+
+                <Button
+
+                    android:id="@+id/baca"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="baca"
+                    android:background="#72e3"
                     android:textColor="#fff"
                     android:textStyle="bold"
                     android:layout_weight="1"

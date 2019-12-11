@@ -54,6 +54,7 @@ public class SignUpActivity extends AppCompatActivity {
             public void onClick(View v) {
                 switch (v.getId()) {
                     case R.id.buttonregister:
+                        finish();
                         registerUser();
                         break;
                 }
@@ -67,6 +68,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         if (mAuth.getCurrentUser() != null) {
             //handle the allready login user
+            //mFirebaseAuth.addAuthStateListener(mAuthStateListener);
         }
     }
 
@@ -122,7 +124,7 @@ public class SignUpActivity extends AppCompatActivity {
 
                             );
 
-                            FirebaseDatabase.getInstance().getReference("cardiacare-ghuroba")
+                            FirebaseDatabase.getInstance().getReference("Users")
                                     .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
                                     .setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override

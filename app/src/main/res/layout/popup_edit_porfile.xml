@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="350dp"
+    android:layout_height="580dp"
+    android:background="@drawable/gradienttwo"
+    android:padding="5dp"
+    android:layout_gravity="center">
+<!--    <Button-->
+<!--        android:id="@+id/txtclose"-->
+<!--        android:layout_width="30dp"-->
+<!--        android:layout_height="30dp"-->
+<!--        android:textColor="#000"-->
+<!--        android:text="X"-->
+<!--        android:textStyle="bold"-->
+<!--        android:layout_gravity="end"-->
+<!--        android:gravity="center"-->
+<!--        android:background="@color/colorAccent"/>-->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="20dp">
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="5dp"
+            android:text="Edit Profile"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:textColor="#fff"
+            android:background="#d03">
+
+
+        </Button>
+
+        <android.support.v7.widget.CardView
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            app:cardCornerRadius="80dp"
+            app:cardElevation="5dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="20dp"
+            android:background="#c0c0c0"
+            >
+
+            <ImageView
+                android:id="@+id/profilPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_menu_profil"
+                android:onClick="pilihFoto"/>
+
+            <ProgressBar
+                android:visibility="gone"
+                android:id="@+id/progresBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"/>
+
+        </android.support.v7.widget.CardView>
+
+
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/nama"
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/usernameregissss"
+        android:paddingLeft="60dp"
+        android:hint="Nama"
+        android:textColorHint="#d0d0d0"/>
+
+    <EditText
+        android:id="@+id/email"
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:background="@drawable/emailregis"
+        android:paddingLeft="60dp"
+        android:hint="Email"
+        android:textColorHint="#d0d0d0"
+        android:inputType="textEmailAddress" />
+
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:background="@drawable/passwordregis"
+        android:hint="Password"
+        android:inputType="textPassword"
+        android:paddingLeft="60dp"
+        android:textColorHint="#d0d0d0"/>
+
+
+
+
+    <Button
+        android:id="@+id/btnSaveProfile"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="36dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:background="@drawable/btn_rounded"
+        android:text="Save"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:onClick="Save"
+        />
+
+
+
+</LinearLayout>

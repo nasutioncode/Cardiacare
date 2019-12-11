@@ -1,22 +1,70 @@
 package com.ghuroba.cardiacare;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.io.IOException;
+
+import static android.app.Activity.RESULT_OK;
+import static android.support.constraint.Constraints.TAG;
 
 public class ProfilFragment extends Fragment {
 
-    Button bt_logout;
+    private static final int CHOOSE_IMAGE = 101;
+    Button bt_logout, bt_edit, bt_delete, bt_baca;
     Activity context;
+    ImageView imageView;
+    ProgressBar progressBar;
+    Uri uriProfilImage;
+    Dialog myDialog;
+    String profilImageUri;
+    Button txtclose;
+    Dialog fbDialogue;
+    TextView nama, email;
+
+    FirebaseAuth mAuth;
+
+    EditText txt_nama, txt_email;
+
+
+    private FirebaseUser uid = FirebaseAuth.getInstance().getCurrentUser();
 
     @Nullable
     @Override
@@ -25,25 +73,142 @@ public class ProfilFragment extends Fragment {
 
         context = getActivity();
 
+
         return inflater.inflate(R.layout.fragment_profil,container,false);
-
-
-
     }
+
+
 
     public void onStart() {
         super.onStart();
 
+
+
+        nama = (TextView)context.findViewById(R.id.baca_nama);
+        email = (TextView)context.findViewById(R.id.baca_email);
+        //foto = (ImageView)context.findViewById(R.id.profilPhoto);
+        imageView = (ImageView)context.findViewById(R.id.profilPhoto);
+        progressBar = (ProgressBar)context.findViewById(R.id.progresBar);
+
+
+
+
+        fbDialogue = new Dialog(context, android.R.style.Theme_Black_NoTitleBar);
+
         bt_logout = (Button)context.findViewById(R.id.logout);
+        bt_edit = (Button)context.findViewById(R.id.Edit);
+        bt_delete = (Button)context.findViewById(R.id.Delete);
+        bt_baca = (Button)context.findViewById(R.id.baca);
+        //txtclose =(Button) context.findViewById(R.id.txtclose);
 
         bt_logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 FirebaseAuth.getInstance().signOut();
-
                 Intent inToLoginPage = new Intent(context, SigInActivity.class);
                 startActivity(inToLoginPage);
+                getActivity().finish();
+                //ProfilFragment.this.finalize();
             }
         });
+
+        bt_edit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+//                fbDialogue.getWindow().setBackgroundDrawable(new ColorDrawable(Color.argb(100, 0, 0, 0)));
+//                fbDialogue.setContentView(R.layout.activity_edit_profile);
+//                fbDialogue.setCancelable(true);
+//                fbDialogue.show();
+
+                Intent i = new Intent(context, EditProfile.class);
+                startActivity(i);
+
+            }
+        });
+
+        bt_delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                deleteUser();
+            }
+        });
+
+        bt_baca.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                loadUserInformation();
+            }
+        });
+
+        //loadUserInformation();
     }
+
+
+    private void loadUserInformation() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            if (user.getPhotoUrl() != null) {
+                Glide.with(ProfilFragment.this)
+                        .load(user.getPhotoUrl().toString())
+                        .into(imageView);
+            }
+
+            if (user.getDisplayName() != null) {
+                nama.setText(user.getDisplayName());
+            }
+
+            if (user.getEmail() != null) {
+                email.setText(user.getEmail());
+            }
+        }
+    }
+
+
+    public void deleteUser() {
+        // [START delete_user]
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String uid = user.getUid();
+
+        user.delete()
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "User account deleted.");
+                            Intent intent = new Intent(context, SigInActivity.class);
+                            startActivity(intent);
+                        }
+                    }
+                });
+
+
+        DatabaseReference dbNode = FirebaseDatabase.getInstance().getReference().getRoot().child("Users").child(uid);
+        dbNode.setValue(null);
+
+        // [END delete_user]
+    }
+
+
+    public void getUserProfile() {
+        // [START get_user_profile]
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            // Name, email address, and profile photo Url
+            String name = user.getDisplayName();
+            String email = user.getEmail();
+            Uri foto = user.getPhotoUrl();
+
+            // Check if user's email is verified
+            boolean emailVerified = user.isEmailVerified();
+
+            // The user's ID, unique to the Firebase project. Do NOT use this value to
+            // authenticate with your backend server, if you have one. Use
+            // FirebaseUser.getIdToken() instead.
+            String uid = user.getUid();
+        }
+        // [END get_user_profile]
+    }
+
 }
