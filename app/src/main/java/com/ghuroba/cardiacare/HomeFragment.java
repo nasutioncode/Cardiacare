@@ -49,7 +49,7 @@ public class HomeFragment extends Fragment {
         history_card.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent inToHistory = new Intent(context, HasilDiagnosaJantungActivity.class);
+                Intent inToHistory = new Intent(context, history.class);
                 startActivity(inToHistory);
             }
         });
