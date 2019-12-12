@@ -451,6 +451,10 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
                 }
 
 
+                //####################### T A B L E  !D I A B E T E S  && !P E R O K O K ||| DONE #######################################################33
+                //####################### T A B L E  !D I A B E T E S  && !P E R O K O K ||| DONE #######################################################33
+
+
 
 
                 Diagnosa diagnosa = new Diagnosa(tanggal, ApaDiabetes, ApaKelamin, ApaRokok, usia, tensi, kolesterol, hasil);
@@ -458,36 +462,18 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 
                 userIdRef.document(userID).collection("Diagnosa").add(diagnosa);
 
+
+//                Bundle bundle = new Bundle();
+//                bundle.putString("hasils", hasil);
+               // Intent intent = new Intent(CreateDiagnosaActivity.this, HasilDiagnosaJantungActivity.class);
+               // intent.putExtras(bundle);
+
+
                 Intent intent = new Intent(CreateDiagnosaActivity.this, HasilDiagnosaJantungActivity.class);
-//                intent.putExtra(DIABETES, rgD);
-//                intent.putExtra(TENSI, tensi);
-//                intent.putExtra(KOLESTEROL, kolesterol);
+                intent.putExtra("hasils", hasil);
                 startActivity(intent);
 
 
-//                if (rbDiabetesYes.isChecked()){
-//                    diabetes = "1";
-//                } else if (rbDiabetesNo.isChecked()){
-//                    diabetes = "2";
-//                }
-//
-//                if (rbKelaminPria.isChecked()){
-//                    kelamin = "1";
-//                } else if (rbKelaminWanita.isChecked()){
-//                    kelamin = "2";
-//                }
-//
-//                if (rbRokokYes.isChecked()){
-//                    rokok = "1";
-//                } else if (rbRokokNo.isChecked()){
-//                    rokok = "2";
-//                }
-
-//                final String usia = etUsia.getText().toString();
-//                final String tensi = etTensi.getText().toString();
-
-
-                //
             }
         });
     }
