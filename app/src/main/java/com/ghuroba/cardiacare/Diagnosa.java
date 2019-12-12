@@ -21,7 +21,7 @@ public class Diagnosa {
     }
 
     public Diagnosa(Calendar tanggal, String rbD, String rbK, String rbR, String usia,
-                    String tensi, String kolesterol) {
+                    String tensi, String kolesterol, String hasill) {
         this.tanggal = tanggal;
         this.diabetes = rbD;
         this.kelamin = rbK;
@@ -29,6 +29,7 @@ public class Diagnosa {
         this.usia = usia;
         this.tensi = tensi;
         this.kolesterol = kolesterol;
+        this.hasil = hasill;
     }
 
     public Calendar getTanggal() {
