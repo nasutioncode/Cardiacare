@@ -3,6 +3,8 @@ package com.ghuroba.cardiacare;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -17,6 +19,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -26,16 +30,30 @@ import java.util.List;
 
 public class CreateDiagnosaActivity extends AppCompatActivity {
 
-    DatabaseReference databaseReference;
-    FirebaseDatabase firebaseDatabase;
-    FirebaseAuth firebaseAuth;
+    public static final String DIABETES = "rgDiabetes";
+    public static final String KELAMIN = "rgKelamin";
+    public static final String ROKOK = "rgRokok";
+    public static final String USIA = "usia";
+    public static final String TENSI = "tensi";
+    public static final String KOLESTEROL = "kolesterol";
 
     TextView tvDate;
-    RadioGroup rgDiabetes, rgKelamin, rgPerokok;
-    RadioButton rbDiabetesYes, rbDiabetesNo, rbKelaminPria, rbKelaminWanita, rbRokokYes, rbRokokNo;
+    RadioGroup rgDiabetes, rgKelamin, rgRokok;
+//    RadioButton rbDiabetesYes, rbDiabetesNo, rbKelaminPria, rbKelaminWanita, rbRokokYes, rbRokokNo;
+    RadioButton rbDiabetes, rbKelamin, rbRokok;
     EditText etUsia, etTensi;
     Spinner spinKolesterol;
     Button btHasil;
+
+//    DatabaseReference databaseReference;
+//    FirebaseDatabase firebaseDatabase;
+//    FirebaseAuth firebaseAuth;
+
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private FirebaseFirestore FSdatabase = FirebaseFirestore.getInstance();
+    private CollectionReference userIdRef = FSdatabase.collection("UserInfo");
+
+    private String userID;
 
     String diabetes = "";
     String kelamin = "";
@@ -50,13 +68,13 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
         tvDate = (TextView) findViewById(R.id.date_formJantung);
         rgDiabetes = findViewById(R.id.radio_diabetes);
         rgKelamin = findViewById(R.id.radio_kelamin);
-        rgPerokok = findViewById(R.id.radio_rokok);
-        rbDiabetesYes = (RadioButton) findViewById(R.id.diabetesYes);
-        rbDiabetesNo = (RadioButton) findViewById(R.id.diabetesNo);
-        rbKelaminPria = (RadioButton) findViewById(R.id.pria);
-        rbKelaminWanita = (RadioButton) findViewById(R.id.wanita);
-        rbRokokYes = (RadioButton) findViewById(R.id.rokokYes);
-        rbRokokNo = (RadioButton) findViewById(R.id.rokokNo);
+        rgRokok = findViewById(R.id.radio_rokok);
+//        rbDiabetesYes = (RadioButton) findViewById(R.id.diabetesYes);
+//        rbDiabetesNo = (RadioButton) findViewById(R.id.diabetesNo);
+//        rbKelaminPria = (RadioButton) findViewById(R.id.pria);
+//        rbKelaminWanita = (RadioButton) findViewById(R.id.wanita);
+//        rbRokokYes = (RadioButton) findViewById(R.id.rokokYes);
+//        rbRokokNo = (RadioButton) findViewById(R.id.rokokNo);
         etUsia = (EditText) findViewById(R.id.text_usia);
         etTensi = (EditText) findViewById(R.id.text_tensi);
         spinKolesterol = (Spinner) findViewById(R.id.spinner_kolesterol);
@@ -83,7 +101,6 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 //        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 //        kolesterol.setAdapter(adapter);
 
-        databaseReference = FirebaseDatabase.getInstance().getReference("dataDiagnosa");
 
         btHasil.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,28 +108,22 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 
                 Calendar tanggal = Calendar.getInstance();
 
-                if (rbDiabetesYes.isChecked()){
-                    diabetes = "1";
-                } else if (rbDiabetesNo.isChecked()){
-                    diabetes = "2";
-                }
+                userID = mAuth.getCurrentUser().getUid();
 
-                if (rbKelaminPria.isChecked()){
-                    kelamin = "1";
-                } else if (rbKelaminWanita.isChecked()){
-                    kelamin = "2";
-                }
+                int rgD = rgDiabetes.getCheckedRadioButtonId();
+                rbDiabetes = findViewById(rgD);
+                int rbD = Integer.parseInt(rbDiabetes.getText().toString());
 
-                if (rbRokokYes.isChecked()){
-                    rokok = "1";
-                } else if (rbRokokNo.isChecked()){
-                    rokok = "2";
-                }
+                int rgK = rgKelamin.getCheckedRadioButtonId();
+                rbKelamin = findViewById(rgK);
+                int rbK = Integer.parseInt(rbDiabetes.getText().toString());
 
-                final String usia = etUsia.getText().toString();
-                final String tensi = etTensi.getText().toString();
-                Date tanggal2 = Calendar.getInstance().getTime();
+                int rgR = rgRokok.getCheckedRadioButtonId();
+                rbRokok = findViewById(rgR);
+                int rbR = Integer.parseInt(rbRokok.getText().toString());
 
+                String usia = etUsia.getText().toString();
+                String tensi = etTensi.getText().toString();
 
                 if (usia.isEmpty()) {
                     etUsia.setError("Tolong masukkan usia anda");
@@ -123,32 +134,44 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
                     etTensi.requestFocus();
                 }
 
+                String kolesterol = spinKolesterol.getSelectedItem().toString();
+
+                Diagnosa diagnosa = new Diagnosa(tanggal, rbD, rbK, rbR, usia, tensi, kolesterol);
+
+                userIdRef.document(userID).collection("Diagnosa").add(diagnosa);
+
+                Intent intent = new Intent(CreateDiagnosaActivity.this, HasilDiagnosaJantungActivity.class);
+                intent.putExtra(DIABETES, rgD);
+                intent.putExtra(TENSI, tensi);
+                intent.putExtra(KOLESTEROL, kolesterol);
+                startActivity(intent);
+
+
+//                if (rbDiabetesYes.isChecked()){
+//                    diabetes = "1";
+//                } else if (rbDiabetesNo.isChecked()){
+//                    diabetes = "2";
+//                }
+//
+//                if (rbKelaminPria.isChecked()){
+//                    kelamin = "1";
+//                } else if (rbKelaminWanita.isChecked()){
+//                    kelamin = "2";
+//                }
+//
+//                if (rbRokokYes.isChecked()){
+//                    rokok = "1";
+//                } else if (rbRokokNo.isChecked()){
+//                    rokok = "2";
+//                }
+
+//                final String usia = etUsia.getText().toString();
+//                final String tensi = etTensi.getText().toString();
+
+
                 //
-                final String kolesterol = spinKolesterol.getSelectedItem().toString();
-
-                //submitBarang(new Diagnosa(etNama.getText().toString(), etMerk.getText().toString(), etHarga.getText().toString()));
-
             }
         });
-
-//        private void submitBarang(Diagnosa diagnosa) {
-//            /**
-//             * Ini adalah kode yang digunakan untuk mengirimkan data ke Firebase Realtime Database
-//             * dan juga kita set onSuccessListener yang berisi kode yang akan dijalankan
-//             * ketika data berhasil ditambahkan
-//             */
-//            database.child("barang").push().setValue(barang).addOnSuccessListener(this, new OnSuccessListener<Void>() {
-//                @Override
-//                public void onSuccess(Void aVoid) {
-//                    etNama.setText("");
-//                    etMerk.setText("");
-//                    etHarga.setText("");
-//                    Snackbar.make(findViewById(R.id.bt_submit), "Data berhasil ditambahkan", Snackbar.LENGTH_LONG).show();
-//                }
-//            });
-//        }
-
-
     }
 
 }

@@ -84,15 +84,25 @@
                     android:id="@+id/diabetesYes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/radio_diabetesYes"
-                    android:textColor="#000000" />
+                    android:text="1"
+                    android:textColor="#ffffff"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="IYA"
+                    android:textColor="#000000"/>
 
                 <RadioButton
                     android:id="@+id/diabetesNo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/radio_diabetesNo"
-                    android:textColor="#000000" />
+                    android:text="2"
+                    android:textColor="#ffffff" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TIDAK"
+                    android:textColor="#000000"/>
             </RadioGroup>
 
             <TextView
@@ -117,13 +127,24 @@
                     android:id="@+id/pria"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="PRIA" />
-
+                    android:text="1"
+                    android:textColor="#ffffff"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PRIA"
+                    android:textColor="#000000"/>
                 <RadioButton
                     android:id="@+id/wanita"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="WANITA"/>
+                    android:text="2"
+                    android:textColor="#ffffff"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="WANITA"
+                    android:textColor="#000000"/>
             </RadioGroup>
 
             <TextView
@@ -148,15 +169,25 @@
                     android:id="@+id/rokokYes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/radio_rokokYes"
-                    android:textColor="#000000" />
+                    android:text="1"
+                    android:textColor="#ffffff" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="IYA"
+                    android:textColor="#000000"/>
 
                 <RadioButton
                     android:id="@+id/rokokNo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/radio_rokokNo"
-                    android:textColor="#000000" />
+                    android:text="2"
+                    android:textColor="#ffffff" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TIDAK"
+                    android:textColor="#000000"/>
             </RadioGroup>
 
             <EditText
