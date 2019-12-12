@@ -152,14 +152,14 @@
                         android:textSize="24sp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="History"
+                        android:text="Diagnosis"
                         android:textColor="#000"/>
 
                     <TextView
                         android:textSize="15sp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lihat History"
+                        android:text="Lakukan Diagnosa"
                         android:textColor="#000"/>
 
                 </LinearLayout>
