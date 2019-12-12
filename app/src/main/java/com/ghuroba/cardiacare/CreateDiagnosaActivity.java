@@ -12,13 +12,18 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.w3c.dom.Text;
+
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class CreateDiagnosaActivity extends AppCompatActivity {
@@ -27,6 +32,7 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
     FirebaseDatabase firebaseDatabase;
     FirebaseAuth firebaseAuth;
 
+    TextView tvDate;
     RadioGroup rgDiabetes, rgKelamin, rgPerokok;
     RadioButton rbDiabetesYes, rbDiabetesNo, rbKelaminPria, rbKelaminWanita, rbRokokYes, rbRokokNo;
     EditText etUsia, etTensi;
@@ -42,6 +48,7 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_diagnosa);
 
+        tvDate = (TextView) findViewById(R.id.date_formJantung);
         rgDiabetes = findViewById(R.id.radio_diabetes);
         rgKelamin = findViewById(R.id.radio_kelamin);
         rgPerokok = findViewById(R.id.radio_rokok);
@@ -56,6 +63,10 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
         spinKolesterol = (Spinner) findViewById(R.id.spinner_kolesterol);
         btHasil = (Button) findViewById(R.id.button_hasil);
 
+        final Calendar tanggal = Calendar.getInstance();
+        String CurrentDate = DateFormat.getDateInstance(DateFormat.FULL).format(tanggal.getTime());
+        tvDate.setText(CurrentDate);
+
         final Spinner kolesterol = spinKolesterol;
 
         List<String> categories = new ArrayList<>();
@@ -65,15 +76,22 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
         categories.add(3, "7 = 270,27");
         categories.add(4, "8 = 308,88");
 
-        ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, categories);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(CreateDiagnosaActivity.this, android.R.layout.simple_spinner_item, categories);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         kolesterol.setAdapter(adapter);
+
+//        ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, categories);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        kolesterol.setAdapter(adapter);
 
         databaseReference = FirebaseDatabase.getInstance().getReference("dataDiagnosa");
 
         btHasil.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                Calendar tanggal = Calendar.getInstance();
+
                 if (rbDiabetesYes.isChecked()){
                     diabetes = "1";
                 } else if (rbDiabetesNo.isChecked()){
@@ -154,14 +172,4 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 //                 break;
 //        }
 //    }
-
-    public void buttonHasil(View view) {
-
-//        // RGD = RadioGroupDiabetes
-//        // RGK = RadioGroupKelamin
-//        // RGP = RadioGroupPerokok
-//        int RGD = rgDiabetes.getCheckedRadioButtonId();
-//        rbDiabetes = findViewById(RGD);
-//        int;
-    }
 }
