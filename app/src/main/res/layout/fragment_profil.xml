@@ -30,7 +30,7 @@
 
 
 
-    <android.support.v7.widget.CardView
+    <androidx.cardview.widget.CardView
         android:layout_width="140dp"
         android:layout_height="140dp"
         app:cardCornerRadius="80dp"
@@ -44,7 +44,8 @@
             android:id="@+id/profilPhoto"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"
+            android:src="@drawable/logo"/>
 
         <ProgressBar
             android:visibility="gone"
@@ -53,9 +54,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"/>
 
-    </android.support.v7.widget.CardView>
+    </androidx.cardview.widget.CardView>
 
-    <android.support.v7.widget.CardView
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#ffffff"
@@ -208,7 +209,7 @@
 
 
 
-    </android.support.v7.widget.CardView>
+    </androidx.cardview.widget.CardView>
 
 
 </RelativeLayout>

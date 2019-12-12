@@ -3,10 +3,10 @@ package com.ghuroba.cardiacare;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.CardView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.cardview.widget.CardView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,7 +49,7 @@ public class HomeFragment extends Fragment {
         history_card.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent inToHistory = new Intent(context, HasilDiagnosaJantungActivity.class);
+                Intent inToHistory = new Intent(context, HistorysActivity.class);
                 startActivity(inToHistory);
             }
         });

@@ -1,10 +1,9 @@
 package com.ghuroba.cardiacare;
 
-import android.content.DialogInterface;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -13,17 +12,16 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import org.w3c.dom.Text;
-
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class CreateDiagnosaActivity extends AppCompatActivity {
@@ -42,6 +40,7 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
     String diabetes = "";
     String kelamin = "";
     String rokok = "";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +62,7 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
         spinKolesterol = (Spinner) findViewById(R.id.spinner_kolesterol);
         btHasil = (Button) findViewById(R.id.button_hasil);
 
-        final Calendar tanggal = Calendar.getInstance();
+        Calendar tanggal = Calendar.getInstance();
         String CurrentDate = DateFormat.getDateInstance(DateFormat.FULL).format(tanggal.getTime());
         tvDate.setText(CurrentDate);
 
@@ -112,6 +111,8 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 
                 final String usia = etUsia.getText().toString();
                 final String tensi = etTensi.getText().toString();
+                Date tanggal2 = Calendar.getInstance().getTime();
+
 
                 if (usia.isEmpty()) {
                     etUsia.setError("Tolong masukkan usia anda");
@@ -125,51 +126,29 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
                 //
                 final String kolesterol = spinKolesterol.getSelectedItem().toString();
 
-                //AlertPopUp
-                AlertDialog.Builder myAlertDialog = new AlertDialog.Builder(CreateDiagnosaActivity.this);
+                //submitBarang(new Diagnosa(etNama.getText().toString(), etMerk.getText().toString(), etHarga.getText().toString()));
 
-                myAlertDialog.setTitle("PERINGATAN");
-                myAlertDialog.setMessage("Apakah anda yakin data yang anda isikan sudah benar?");
-                myAlertDialog.setPositiveButton("YA", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                    }
-                });
-                myAlertDialog.setNegativeButton("TIDAK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                    }
-                });
-                myAlertDialog.show();
             }
         });
+
+//        private void submitBarang(Diagnosa diagnosa) {
+//            /**
+//             * Ini adalah kode yang digunakan untuk mengirimkan data ke Firebase Realtime Database
+//             * dan juga kita set onSuccessListener yang berisi kode yang akan dijalankan
+//             * ketika data berhasil ditambahkan
+//             */
+//            database.child("barang").push().setValue(barang).addOnSuccessListener(this, new OnSuccessListener<Void>() {
+//                @Override
+//                public void onSuccess(Void aVoid) {
+//                    etNama.setText("");
+//                    etMerk.setText("");
+//                    etHarga.setText("");
+//                    Snackbar.make(findViewById(R.id.bt_submit), "Data berhasil ditambahkan", Snackbar.LENGTH_LONG).show();
+//                }
+//            });
+//        }
+
+
     }
 
-
-
-
-/*
-* if (RadioGroupDiabetes == 1 %% RadioGroupKelamin == 1 %% RadioGroupPerokok == 1 %% tekanan darah >= 40 %%)
-* */
-//    public void onRadioButtonClicked(View view) {
-//        boolean checked =((RadioButton) view).isChecked();
-//
-//        switch (view.getId()){
-//            case R.id.diabetesYes:
-//                break;
-//            case R.id.diabetesNo:
-//                break;
-//            default:
-//                break;
-//        }
-//
-//        switch (view.getId()){
-//            case R.id.rokokYes:
-//                break;
-//            case R.id.rokokNo:
-//                break;
-//             default:
-//                 break;
-//        }
-//    }
 }
