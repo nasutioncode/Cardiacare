@@ -37,6 +37,11 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
     public static final String TENSI = "tensi";
     public static final String KOLESTEROL = "kolesterol";
 
+
+    String ApaDiabetes = "";
+    String ApaKelamin = "";
+    String ApaRokok = "";
+
     TextView tvDate;
     RadioGroup rgDiabetes, rgKelamin, rgRokok;
 //    RadioButton rbDiabetesYes, rbDiabetesNo, rbKelaminPria, rbKelaminWanita, rbRokokYes, rbRokokNo;
@@ -58,6 +63,9 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
     String diabetes = "";
     String kelamin = "";
     String rokok = "";
+    String BulanApa = "";
+    String NamaBulan;
+    int hitungHari;
 
 
     @Override
@@ -114,13 +122,40 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
                 rbDiabetes = findViewById(rgD);
                 int rbD = Integer.parseInt(rbDiabetes.getText().toString());
 
+                if (rbD == 1) {
+
+                    ApaDiabetes = "Iya";
+                }
+
+                if (rbD == 2) {
+                    ApaDiabetes = "Tidak";
+                }
+
                 int rgK = rgKelamin.getCheckedRadioButtonId();
                 rbKelamin = findViewById(rgK);
                 int rbK = Integer.parseInt(rbDiabetes.getText().toString());
 
+                if (rbK == 1) {
+
+                    ApaKelamin = "Pria";
+                }
+
+                if (rbK == 2) {
+                    ApaKelamin = "Wanita";
+                }
+
                 int rgR = rgRokok.getCheckedRadioButtonId();
                 rbRokok = findViewById(rgR);
                 int rbR = Integer.parseInt(rbRokok.getText().toString());
+
+                if (rbR == 1) {
+
+                    ApaRokok = "Iya";
+                }
+
+                if (rbR == 2) {
+                    ApaRokok = "Tidak";
+                }
 
                 String usia = etUsia.getText().toString();
                 String tensi = etTensi.getText().toString();
@@ -134,9 +169,40 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
                     etTensi.requestFocus();
                 }
 
+//
+//                for (int i=0; i < 366; i++) {
+//                    hitungHari++;
+//                    if (hitungHari <= 30) {
+//                        NamaBulan = "Januari";
+//                    }else if (hitungHari >= 31 && hitungHari <= 62) {
+//                        NamaBulan = "Februari";
+//                    }else if (hitungHari >= 63 && hitungHari <= 94) {
+//                        NamaBulan = "Maret";
+//                    }
+//
+//
+//                }
+//
+//
+//                if (NamaBulan == "Januari") {
+//                    BulanApa = "Januai";
+//                }
+//
+//                if (NamaBulan == "Febuari") {
+//                    BulanApa = "Februari";
+//                }
+//
+//                if (NamaBulan == "Maret") {
+//                    BulanApa = "Maret";
+//                }
+
                 String kolesterol = spinKolesterol.getSelectedItem().toString();
 
-                Diagnosa diagnosa = new Diagnosa(tanggal, rbD, rbK, rbR, usia, tensi, kolesterol);
+
+
+
+
+                Diagnosa diagnosa = new Diagnosa(tanggal, ApaDiabetes, ApaKelamin, ApaRokok, usia, tensi, kolesterol);
 
                 userIdRef.document(userID).collection("Diagnosa").add(diagnosa);
 

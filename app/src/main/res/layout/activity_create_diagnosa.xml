@@ -57,8 +57,10 @@
             <ImageView
                 android:id="@+id/form_image"
                 android:layout_width="match_parent"
-                android:layout_height="232dp"
+                android:layout_height="192dp"
                 android:layout_gravity="center"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
                 android:layout_marginTop="10dp"
                 android:background="@drawable/regis" />
 
@@ -192,12 +194,12 @@
 
             <EditText
                 android:id="@+id/text_usia"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="47dp"
                 android:layout_gravity="center"
-                android:layout_marginLeft="25dp"
+                android:layout_marginLeft="55dp"
                 android:layout_marginTop="20dp"
-                android:layout_marginRight="25dp"
+                android:layout_marginRight="55dp"
                 android:background="@drawable/et_shape1"
                 android:ems="10"
                 android:hint="@string/text_usia"
@@ -206,12 +208,12 @@
 
             <EditText
                 android:id="@+id/text_tensi"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="47dp"
                 android:layout_gravity="center"
-                android:layout_marginLeft="25dp"
+                android:layout_marginLeft="55dp"
                 android:layout_marginTop="20dp"
-                android:layout_marginRight="25dp"
+                android:layout_marginRight="55dp"
                 android:background="@drawable/et_shape1"
                 android:ems="12"
                 android:hint="@string/text_tensi"

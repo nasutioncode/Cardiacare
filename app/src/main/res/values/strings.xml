@@ -27,7 +27,7 @@
     <string name="label_rokok">Apakah anda Perokok?</string>
     <string name="radio_rokokYes">IYA</string>
     <string name="radio_rokokNo">TIDAK</string>
-    <string name="label_kelamin">JENIS KELAMIN</string>
+    <string name="label_kelamin">Jenis Kelamin</string>
     <string name="label_usia">USIA</string>
     <string name="text_kelamin">laki/perempuan</string>
     <string name="text_usia">Masukkan Usia</string>

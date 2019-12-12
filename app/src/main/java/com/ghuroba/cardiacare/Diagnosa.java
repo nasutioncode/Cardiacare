@@ -8,9 +8,9 @@ import java.util.Calendar;
 @IgnoreExtraProperties
 public class Diagnosa {
     private Calendar tanggal;
-    private int diabetes;
-    private int kelamin;
-    private int rokok;
+    private String diabetes;
+    private String kelamin;
+    private String rokok;
     private String usia;
     private String tensi;
     private String kolesterol;
@@ -20,7 +20,7 @@ public class Diagnosa {
 
     }
 
-    public Diagnosa(Calendar tanggal, int rbD, int rbK, int rbR, String usia,
+    public Diagnosa(Calendar tanggal, String rbD, String rbK, String rbR, String usia,
                     String tensi, String kolesterol) {
         this.tanggal = tanggal;
         this.diabetes = rbD;
@@ -36,42 +36,52 @@ public class Diagnosa {
     }
 
     public void setTanggal(Calendar tanggal) {
+
         this.tanggal = tanggal;
     }
 
-    public int getDiabetes() {
+    public String getDiabetes() {
+
         return diabetes;
     }
 
-    public void setDiabetes(int diabetes) {
+    public void setDiabetes(String diabetes) {
+
         this.diabetes = diabetes;
     }
 
-    public int getKelamin() {
+    public String getKelamin() {
+
         return kelamin;
     }
 
-    public void setKelamin(int kelamin) {
+    public void setKelamin(String kelamin) {
+
         this.kelamin = kelamin;
     }
 
-    public int getRokok() {
+    public String getRokok() {
+
         return rokok;
     }
 
-    public void setRokok(int rokok) {
+    public void setRokok(String rokok)
+    {
         this.rokok = rokok;
     }
 
     public String getUsia() {
+
         return usia;
     }
 
     public void setUsia(String usia) {
+
         this.usia = usia;
     }
 
     public String getTensi() {
+
         return tensi;
     }
 
@@ -80,14 +90,17 @@ public class Diagnosa {
     }
 
     public String getKolesterol() {
+
         return kolesterol;
     }
 
-    public void setKolesterol(String kolesterol) {
+    public void setKolesterol(String kolesterol)
+    {
         this.kolesterol = kolesterol;
     }
 
     public String getHasil() {
+
         return hasil;
     }
 
