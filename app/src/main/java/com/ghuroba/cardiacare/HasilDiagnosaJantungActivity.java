@@ -9,22 +9,23 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 public class HasilDiagnosaJantungActivity extends AppCompatActivity {
 
-    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
-    private FirebaseFirestore FSdatabase = FirebaseFirestore.getInstance();
-    private CollectionReference userIdRef = FSdatabase.collection("UserInfo");
-    private String userID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +33,17 @@ public class HasilDiagnosaJantungActivity extends AppCompatActivity {
         setContentView(R.layout.activity_hasil_diagnosa_jantung);
 
         TextView hasilIntent = (TextView) findViewById(R.id.text_hasilRisiko);
+        TextView tingkatIntent = (TextView) findViewById(R.id.tingkat_resiko);
+        TextView saranDiabetes = (TextView) findViewById(R.id.sarandiabtes);
+        TextView saranFaktor = (TextView) findViewById(R.id.saranfaktor);
+        TextView saranKolestrol = (TextView) findViewById(R.id.sarankolestrol);
+        TextView saranTensi = (TextView) findViewById(R.id.sarantensi);
+        TextView saranRokok = (TextView) findViewById(R.id.saranrokok);
+        TextView saranSatu = (TextView) findViewById(R.id.saransatu);
+
+
         Button btn_detail = (Button) findViewById(R.id.button_hasilDetail);
+
 
         if(getIntent().getExtras()!=null){
             /**
@@ -40,11 +51,26 @@ public class HasilDiagnosaJantungActivity extends AppCompatActivity {
              */
             Bundle bundle = getIntent().getExtras();
             hasilIntent.setText(bundle.getString("hasils"));
+            tingkatIntent.setText(bundle.getString("tingkats"));
+            saranDiabetes.setText(bundle.getString("sarandiabetess"));
+            saranFaktor.setText(bundle.getString("saranFaktors"));
+            saranKolestrol.setText(bundle.getString("saranKolesterols"));
+            saranTensi.setText(bundle.getString("saranTensis"));
+            saranRokok.setText(bundle.getString("saranRokoks"));
+            saranSatu.setText(bundle.getString("saranssatu"));
+
         }else{
             /**
              * Apabila Bundle tidak ada, ambil dari Intent
              */
             hasilIntent.setText(getIntent().getStringExtra("hasils"));
+            tingkatIntent.setText(getIntent().getStringExtra("tingkats"));
+            saranDiabetes.setText(getIntent().getStringExtra("sarandiabetess"));
+            saranFaktor.setText(getIntent().getStringExtra("saranFaktors"));
+            saranKolestrol.setText(getIntent().getStringExtra("saranKolesterols"));
+            saranTensi.setText(getIntent().getStringExtra("saranTensis"));
+            saranRokok.setText(getIntent().getStringExtra("saranRokoks"));
+            saranSatu.setText(getIntent().getStringExtra("saranssatu"));
         }
 
         btn_detail.setOnClickListener(new View.OnClickListener() {
@@ -56,47 +82,5 @@ public class HasilDiagnosaJantungActivity extends AppCompatActivity {
         });
     }
 
-//    private void ReadSingleContact() {
-//
-//        userIdRef.document(userID).collection("Diagnosa").add(diagnosa);
-//
-//        DocumentReference user = db.collection("PhoneBook").document("Contacts");
-//
-//        user.get().addOnCompleteListener(new OnCompleteListener< DocumentSnapshot >() {
-//
-//            @Override
-//
-//            public void onComplete(@NonNull Task< DocumentSnapshot > task) {
-//
-//                if (task.isSuccessful()) {
-//
-//                    DocumentSnapshot doc = task.getResult();
-//
-//                    StringBuilder fields = new StringBuilder("");
-//
-//                    fields.append("Name: ").append(doc.get("Name"));
-//
-//                    fields.append("\nEmail: ").append(doc.get("Email"));
-//
-//                    fields.append("\nPhone: ").append(doc.get("Phone"));
-//
-//                    textDisplay.setText(fields.toString());
-//
-//                }
-//
-//            }
-//
-//        })
-//
-//                .addOnFailureListener(new OnFailureListener() {
-//
-//                    @Override
-//
-//                    public void onFailure(@NonNull Exception e) {
-//
-//                    }
-//
-//                });
-//
-//    }
+
 }

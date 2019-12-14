@@ -20,20 +20,9 @@ public class HomeFragment extends Fragment {
     Button butt;
 
 
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-
-        context = getActivity();
-
-        return inflater.inflate(R.layout.fragment_home,container,false);
-    }
-
-
-
-
-    public void onStart() {
-        super.onStart();
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
 
         diagnosa_card = (CardView) context.findViewById(R.id.diag_card);
         history_card = (CardView) context.findViewById(R.id.his_card);
@@ -53,6 +42,41 @@ public class HomeFragment extends Fragment {
                 startActivity(inToHistory);
             }
         });
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        context = getActivity();
+
+        return inflater.inflate(R.layout.fragment_home,container,false);
+    }
+
+
+
+
+    public void onStart() {
+        super.onStart();
+
+//        diagnosa_card = (CardView) context.findViewById(R.id.diag_card);
+//        history_card = (CardView) context.findViewById(R.id.his_card);
+//
+//        diagnosa_card.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent inToLoginPage = new Intent(context, CreateDiagnosaActivity.class);
+//                startActivity(inToLoginPage);
+//            }
+//        });
+//
+//        history_card.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent inToHistory = new Intent(context, HistorysActivity.class);
+//                startActivity(inToHistory);
+//            }
+//        });
 
 
     }

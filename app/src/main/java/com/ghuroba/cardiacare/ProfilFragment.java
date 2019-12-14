@@ -25,6 +25,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import static androidx.constraintlayout.widget.Constraints.TAG;
 
@@ -115,6 +117,8 @@ public class ProfilFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 deleteUser();
+                Intent intent = new Intent(context, SigInActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -153,9 +157,13 @@ public class ProfilFragment extends Fragment {
     public void deleteUser() {
         // [START delete_user]
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        String uid = user.getUid();
+        String info = user.getUid();
 
-        user.delete()
+
+        FirebaseFirestore FSdatabase = FirebaseFirestore.getInstance();
+        CollectionReference userIdRef = FSdatabase.collection("UserInfo");
+
+        userIdRef.document(info).delete()
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
@@ -166,12 +174,8 @@ public class ProfilFragment extends Fragment {
                     }
                 });
 
+        user.delete();
 
-        DatabaseReference dbNode = FirebaseDatabase.getInstance().getReference().getRoot().child("Users").child(uid);
-        dbNode.setValue(null);
-
-        Intent intent = new Intent(context, SigInActivity.class);
-        startActivity(intent);
 
         // [END delete_user]
     }
@@ -180,6 +184,8 @@ public class ProfilFragment extends Fragment {
     public void getUserProfile() {
         // [START get_user_profile]
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String info = user.getUid();
+
         if (user != null) {
             // Name, email address, and profile photo Url
             String name = user.getDisplayName();
@@ -187,11 +193,6 @@ public class ProfilFragment extends Fragment {
             Uri foto = user.getPhotoUrl();
 
             // Check if user's email is verified
-            boolean emailVerified = user.isEmailVerified();
-
-            // The user's ID, unique to the Firebase project. Do NOT use this value to
-            // authenticate with your backend server, if you have one. Use
-            // FirebaseUser.getIdToken() instead.
             String uid = user.getUid();
         }
         // [END get_user_profile]

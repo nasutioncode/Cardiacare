@@ -1,11 +1,15 @@
 package com.ghuroba.cardiacare;
 
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.material.snackbar.Snackbar;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -22,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DateFormat;
@@ -32,12 +37,9 @@ import java.util.List;
 
 public class CreateDiagnosaActivity extends AppCompatActivity {
 
-    public static final String DIABETES = "rgDiabetes";
-    public static final String KELAMIN = "rgKelamin";
-    public static final String ROKOK = "rgRokok";
-    public static final String USIA = "usia";
-    public static final String TENSI = "tensi";
-    public static final String KOLESTEROL = "kolesterol";
+
+    private static final String TAG = "CreateDianosaActivity";
+
 
     String indexSatu, indexDua, indexTiga, indexEmpat, indexLima;
 
@@ -53,30 +55,18 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 
     TextView tvDate;
     RadioGroup rgDiabetes, rgKelamin, rgRokok;
-//    RadioButton rbDiabetesYes, rbDiabetesNo, rbKelaminPria, rbKelaminWanita, rbRokokYes, rbRokokNo;
     RadioButton rbDiabetes, rbKelamin, rbRokok;
     EditText etUsia, etTensi;
     Spinner spinKolesterol;
     Button btHasil;
-    String hasil;
-
-//    DatabaseReference databaseReference;
-//    FirebaseDatabase firebaseDatabase;
-//    FirebaseAuth firebaseAuth;
+    String hasil , usia, tensi, kolesterol, tingkat , saranDiabetes = "", saranRokok = "", saranTensi = "", saranKolesterol ="", saranFaktor = "", saran1 = "";
+    Calendar tanggal = Calendar.getInstance();
 
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private FirebaseFirestore FSdatabase = FirebaseFirestore.getInstance();
     private CollectionReference userIdRef = FSdatabase.collection("UserInfo");
-
     private String userID;
-
-    String diabetes = "";
-    String kelamin = "";
-    String rokok = "";
-    String BulanApa = "";
-    String NamaBulan;
-    int hitungHari;
-
+    TextView BacaData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,22 +77,18 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
         rgDiabetes = findViewById(R.id.radio_diabetes);
         rgKelamin = findViewById(R.id.radio_kelamin);
         rgRokok = findViewById(R.id.radio_rokok);
-//        rbDiabetesYes = (RadioButton) findViewById(R.id.diabetesYes);
-//        rbDiabetesNo = (RadioButton) findViewById(R.id.diabetesNo);
-//        rbKelaminPria = (RadioButton) findViewById(R.id.pria);
-//        rbKelaminWanita = (RadioButton) findViewById(R.id.wanita);
-//        rbRokokYes = (RadioButton) findViewById(R.id.rokokYes);
-//        rbRokokNo = (RadioButton) findViewById(R.id.rokokNo);
         etUsia = (EditText) findViewById(R.id.text_usia);
         etTensi = (EditText) findViewById(R.id.text_tensi);
         spinKolesterol = (Spinner) findViewById(R.id.spinner_kolesterol);
         btHasil = (Button) findViewById(R.id.button_hasil);
 
-        Calendar tanggal = Calendar.getInstance();
+        BacaData = (TextView) findViewById(R.id.texthasil);
+
+
         String CurrentDate = DateFormat.getDateInstance(DateFormat.FULL).format(tanggal.getTime());
         tvDate.setText(CurrentDate);
 
-        final Spinner kolesterol = spinKolesterol;
+        final Spinner kolesterols = spinKolesterol;
 
         List<String> categories = new ArrayList<>();
         categories.add(0, "4 = 15444 mg/dL");
@@ -113,7 +99,7 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(CreateDiagnosaActivity.this, android.R.layout.simple_spinner_item, categories);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        kolesterol.setAdapter(adapter);
+        kolesterols.setAdapter(adapter);
 
         spinKolesterol.setAdapter(adapter);
 
@@ -171,7 +157,7 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 
                 int rgK = rgKelamin.getCheckedRadioButtonId();
                 rbKelamin = findViewById(rgK);
-                int rbK = Integer.parseInt(rbDiabetes.getText().toString());
+                int rbK = Integer.parseInt(rbKelamin.getText().toString());
 
                 if (rbK == 1) {
                     ApaKelamin = "Pria";
@@ -194,9 +180,9 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
                     ApaRokok = "Tidak";
                 }
 
-                String usia = etUsia.getText().toString();
+                usia = etUsia.getText().toString();
                 usiaFix = Integer.parseInt(usia);
-                String tensi = etTensi.getText().toString();
+                tensi = etTensi.getText().toString();
                 tensiFix = Integer.parseInt(tensi);
 
                 if (usia.isEmpty()) {
@@ -213,252 +199,2633 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
                 simpanDate = CurrentDate;
 
 
-                String kolesterol = spinKolesterol.getSelectedItem().toString();
+                kolesterol = spinKolesterol.getSelectedItem().toString();
 //                int kolestrolFix = Integer.parseInt(kolesterol);
 
 
+                //:::::::::::::::::::::::::::::::::::::::; NON - DIABETES && NON - PEROKOK && PRIA  ;:::::::::::::::::::::::::::::::::::::::::::::::
                 //PERUBAHAN PADA KOLESTEROL
 
-                if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+                //============== 1 - 5
+                if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexSatu) {
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexDua){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+                    tingkat = " Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexTiga){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexEmpat){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexLima){
                     hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
                 }
 
-                // PERUBAHAN PADA TEKANAN DARAH
+                // PERUBAHAN PADA TEKANAN DARAH && KOLESTEROL
+                //============== 6 - 10
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }
 
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+                //PERUBAHAN PADA TEKANAN DARAH && KOLESTEROL 2
+                //=================== 11 - 15
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
-                    hasil = "< 20 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
                 }
 
                 //PERUBAHAN PADA TEKANAN DARAH
-
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+                //================= 16 - 20
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexSatu){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
-                    hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
-                    hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
-                    hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
-                    hasil = "< 30 %";
-                }
-
-
-                //PERUBAHAN PADA TEKANAN DARAH
-
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexSatu){
-                    hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49 && tensiFix > 180  && kolesterol == indexDua){
-                    hasil = "< 20 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexTiga){
-                    hasil = "< 30 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexEmpat){
-                    hasil = "< 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 40 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexLima){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180  && kolesterol == indexDua){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexTiga){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexEmpat){
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                    saran1 = "Lakukan konsultasi ke dokter & Turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexLima){
                     hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke dokter & Turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
                 }
-
-
 
                 //PERUBAHAN PADA USIA POLA YANG SAMA 10:10===================================================================================
-
-
-                if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+                //================= 21 - 25
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
                     hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
                 }
 
-
-
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+                //============== 26 - 30
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
-                    hasil = "< 20 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
                 }
 
+                //================ 31 - 35
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
 
-
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
-                    hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
-                    hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
-                    hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
-                    hasil = "< 20 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
-                    hasil = "< 30 %";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
                 }
 
-
-
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexSatu){
-                    hasil = "< 20 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexDua){
-                    hasil = "< 30 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexTiga){
-                    hasil = "< 30 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexEmpat){
+                //=============== 36 - 40
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexSatu){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexDua){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexTiga){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexEmpat){
                     hasil = "> 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexLima){
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexLima){
                     hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
                 }
-
 
                 //PERUBAHAN PADA USIA ** LAGI ** DENGAN POLA YANG SAMA 10:10=========== K E D U A=============================================================================
-
-
-                if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+                //========== 41 - 45
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
                     hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
                 }
 
-
-
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+                //========== 46 - 50
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
-                    hasil = "< 20 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
-                    hasil = "< 20 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
                 }
 
-
-
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+                //============== 51 - 55
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
                     hasil = "< 10 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
-                    hasil = "< 20 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
-                    hasil = "< 20 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
-                    hasil = "< 30 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
-                    hasil = "< 40 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
                 }
 
-
-
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexSatu){
-                    hasil = "< 30 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexDua){
-                    hasil = "< 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexTiga){
+                //============== 56 - 60
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexSatu){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexDua){
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexTiga){
                     hasil = "> 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexEmpat){
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexEmpat){
                     hasil = "> 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexLima){
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexLima){
                     hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Berat";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
                 }
-
-
 
                 //PERUBAHAN PADA USIA ** LAGI ** DENGAN POLA YANG SAMA 10:10=========== K E T I G A =============================================================================
-
-
-                if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+                //=========== 61 - 65
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
                     hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Kolesterol). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Lanjutkan pola hidup sehatmu";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu";
+                }
+
+                //========= 66 - 70
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Aman, tetapi coba turunkan faktor pencetusmu (Tekanan darah). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah).Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }
+
+                //================ 71 - 75
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah). Untuk menurunkan tingkat risiko dan hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Ringan";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                    saran1 = "Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }
+
+                //============= 76 - 80
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexSatu){
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & Coba turunkan faktor pencetusmu (Tekanan darah). Untuk menurunkan tingkat risiko hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 180 && kolesterol == indexDua){
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & Coba turunkan faktor pencetusmu (Tekanan darah). Untuk menurunkan tingkat risiko hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexTiga){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexEmpat){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexLima){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                    saran1 = "Lakukan konsultasi ke Dokter & Coba turunkan faktor pencetusmu (Tekanan darah dan Kolesterol). Untuk menurunkan tingkat risiko hidup yang lebih sehat";
+                    saranTensi = "Tekanan darahmu masuk ke kategori Hipertensi Sedang";
+                    saranKolesterol = "cobalah turunkan tingkat kolesterolmu ";
+                }
+
+                //####################### T A B L E  !NON - D I A B E T E S  && !NON - P E R O K O K && PRIA ||| DONE #######################################################33
+                //####################### T A B L E  !NON - D I A B E T E S  && !NON - P E R O K O K && PRIA ||| DONE #######################################################33
+
+                //:::::::::::::::::::::::::::::::::::::::; NON-DIABETES && PEROKOK && PRIA  ;::::::::::::::::::::::::::::::::::::::::::::::::://
+
+                //==========================> 1 - 5
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }
+
+                //==========================> 6 - 10
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //=========================> 11 - 15
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //========================== 16 - 20
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexSatu) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexDua) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //========================= 21 - 25
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139  && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //====================== 26 - 30
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //====================== 31 - 35
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //======================= 36 - 40
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //======================= 41 - 45
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //====================== 46 - 50
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }
+
+                //====================== 51 - 55
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //===================== 56 - 60
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //=================== 61 - 65
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //==================== 66 - 70
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }
+
+                //===================== 71 - 75
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //================= 76 - 80
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //####################### T A B L E  !NON - D I A B E T E S  && P E R O K O K && PRIA ||| DONE #######################################################33
+                //####################### T A B L E  !NON - D I A B E T E S  && P E R O K O K && PRIA ||| DONE #######################################################33
+
+                //:::::::::::::::::::::::::::::::::::::::; NON-DIABETES && NON - PEROKOK && WANITA  ;::::::::::::::::::::::::::::::::::::::::::::::::://
+
+                //============ 1 - 5
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = " Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexLima){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }
+
+                //================= 6 - 10
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //==================== 11 - 15
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //====================== 16 - 20
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexSatu){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180  && kolesterol == indexDua){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexTiga){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexEmpat){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexLima){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //======================= 21 - 25
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                    saran1 = "Lanjutkan pola hidup sehatmu";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }
+
+                //====================== 26 - 30
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //======================= 31 - 35
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //======================= 36 - 40
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexSatu){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexDua){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexTiga){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexEmpat){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexLima){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+
+                // ================= 41 - 45
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }
+
+                //=================== 46 - 50
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+                    hasil = "10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //================== 51 - 55
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+                    hasil = "10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+                    hasil = "10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //================== 56 - 60
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexSatu){
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexDua){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexTiga){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexEmpat){
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexLima){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //==================== 61 - 65
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
                     hasil = "< 10 %";
+                    tingkat = "Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
                     hasil = "< 10 %";
+                    tingkat = "Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
-                    hasil = "< 20 %";
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
-                    hasil = "< 20 %";
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
                 }
 
-
-
+                //======================= 66 - 70
                 else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
                     hasil = "< 10 %";
+                    tingkat = "Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
-                    hasil = "< 20 %";
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
-                    hasil = "< 20 %";
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
-                    hasil = "< 20 %";
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
-                    hasil = "< 30 %";
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
                 }
 
-
-
+                //====================== 71 - 75
                 else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
-                    hasil = "< 20 %";
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
-                    hasil = "< 20 %";
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
-                    hasil = "< 30 %";
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
-                    hasil = "< 30 %";
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
                 }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
-                    hasil = "< 40 %";
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //================ 76 - 80
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexSatu){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 180 && kolesterol == indexDua){
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexTiga){
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexEmpat){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexLima){
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //####################### T A B L E  !NON - D I A B E T E S  && !NON - P E R O K O K && WANITA ||| DONE #######################################################33
+                //####################### T A B L E  !NON - D I A B E T E S  && !NON - P E R O K O K && WANITA ||| DONE #######################################################33
+
+                //:::::::::::::::::::::::::::::::::::::::; NON-DIABETES && PEROKOK && WANITA  ;::::::::::::::::::::::::::::::::::::::::::::::::://
+
+                //==========================> 1 - 5
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }
+
+                //==========================> 6 - 10
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //=========================> 11 - 15
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //========================== 16 - 20
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexSatu) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexDua) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //========================= 21 - 25
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139  && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }
+
+                //====================== 26 - 30
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //====================== 31 - 35
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //======================= 36 - 40
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //======================= 41 - 45
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "<10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //====================== 46 - 50
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //====================== 51 - 55
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //===================== 56 - 60
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //=================== 61 - 65
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+
+                //==================== 66 - 70
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = " < 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+
+                //===================== 71 - 75
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }
+
+                //================= 76 - 80
+                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //####################### T A B L E  !NON - D I A B E T E S  && P E R O K O K && WANITA ||| DONE #######################################################33
+                //####################### T A B L E  !NON - D I A B E T E S  && P E R O K O K && WANITA ||| DONE #######################################################33
+
+                //-------------------------------------------------------------------------------------------------------------------------------
+                //-------------------------------------------------------------------------------------------------------------------------------
+                //--------------------------------------------------------PEMBATAS---------------------------------------------------------------
+
+                //:::::::::::::::::::::::::::::::::::::::; DIABETES && NON-PEROKOK && PRIA  ;::::::::::::::::::::::::::::::::::::::::::::::::://
+
+                //==========================> 1 - 5
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }
+//
+//                //==========================> 6 - 10
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu){
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+//
+//                //=========================> 11 - 15
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+//
+//                //========================== 16 - 20
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexSatu) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexDua) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexTiga) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+//
+//                //========================= 21 - 25
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139  && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }
+//
+//                //====================== 26 - 30
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+//
+//                //====================== 31 - 35
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+//
+//                //======================= 36 - 40
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+//
+//                //======================= 41 - 45
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }
+//
+//                //====================== 46 - 50
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }
+//
+//                //====================== 51 - 55
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+//
+//                //===================== 56 - 60
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+//
+//                //=================== 61 - 65
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+                    hasil = "< 10 %";
+                    tingkat = "Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }
+//
+//                //==================== 66 - 70
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+                    hasil = "10 % to < 20 %";
+                    tingkat = "Lumayan Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+//
+//                //===================== 71 - 75
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+                    hasil = "20 % to < 30 %";
+                    tingkat = "Kurang Aman";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+                    hasil = "30 % to < 40 %";
+                    tingkat = "Lumayan Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }
+
+                //================= 76 - 80
+                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexSatu) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexDua) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexTiga) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexEmpat) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
+                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexLima) {
+                    hasil = "> 40 %";
+                    tingkat = "Bahaya";
                 }
 
 
+//
 
-                else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix > 180 && kolesterol == indexSatu){
-                    hasil = "< 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix > 180 && kolesterol == indexDua){
-                    hasil = "< 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix > 180 && kolesterol == indexTiga){
-                    hasil = "> 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix > 180 && kolesterol == indexEmpat){
-                    hasil = "> 40 %";
-                }else if (ApaDiabetes == "Tidak" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix > 180 && kolesterol == indexLima){
-                    hasil = "> 40 %";
-                }
+//                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ B A T A S   C O M P I L E ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+//                //####################### T A B L E  !D I A B E T E S  && P E R O K O K && PRIA ||| DONE #######################################################33
+//                //####################### T A B L E  !D I A B E T E S  && P E R O K O K && PRIA ||| DONE #######################################################33
+//
+//
+//                //:::::::::::::::::::::::::::::::::::::::; DIABETES && PEROKOK && PRIA  ;::::::::::::::::::::::::::::::::::::::::::::::::://
+//
+//                //==========================> 1 - 5
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }
+//
+//                //==========================> 6 - 10
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Aman";
+//                }
+//
+//                //=========================> 11 - 15
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //========================== 16 - 20
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexSatu) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //========================= 21 - 25
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139  && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //====================== 26 - 30
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //====================== 31 - 35
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //======================= 36 - 40
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexSatu) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //======================= 41 - 45
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }
+//
+//                //====================== 46 - 50
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //====================== 51 - 55
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //===================== 56 - 60
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexSatu) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //=================== 61 - 65
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //==================== 66 - 70
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //===================== 71 - 75
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //================= 76 - 80
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexSatu) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Pria" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//                //####################### T A B L E  !D I A B E T E S  && P E R O K O K && PRIA ||| DONE #######################################################33
+//                //####################### T A B L E  !D I A B E T E S  && P E R O K O K && PRIA ||| DONE #######################################################33
+//
+//                //:::::::::::::::::::::::::::::::::::::::; !DIABETES && NON - PEROKOK && WANITA  ;::::::::::::::::::::::::::::::::::::::::::::::::://
+//
+//                //============ 1 - 5
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                    saran1 = "Lanjutkan pola hidup sehatmu";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = " Aman";
+//                    saran1 = "Lanjutkan pola hidup sehatmu";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexTiga){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexEmpat){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 0 && tensiFix <=139 && kolesterol == indexLima){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }
+//
+//                //================= 6 - 10
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                    saran1 = "Lanjutkan pola hidup sehatmu";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                    saran1 = "Lanjutkan pola hidup sehatmu";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }
+//
+//                //==================== 11 - 15
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                    saran1 = "Lanjutkan pola hidup sehatmu";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                    saran1 = "Lanjutkan pola hidup sehatmu";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //====================== 16 - 20
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexSatu){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180  && kolesterol == indexDua){
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexTiga){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexEmpat){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 0 && usiaFix <=49 && tensiFix > 180 && kolesterol == indexLima){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //======================= 21 - 25
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                    saran1 = "Lanjutkan pola hidup sehatmu";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                    saran1 = "Lanjutkan pola hidup sehatmu";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }
+//
+//                //====================== 26 - 30
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }
+//
+//                //======================= 31 - 35
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 && usiaFix <=59   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //======================= 36 - 40
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexSatu){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexDua){
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexTiga){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexEmpat){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 50 &&  usiaFix <=59  && tensiFix > 180 && kolesterol == indexLima){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                // ================= 41 - 45
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }
+//
+//                //=================== 46 - 50
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }
+//
+//                //================== 51 - 55
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 && usiaFix <=69   && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //================== 56 - 60
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexSatu){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexDua){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexTiga){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexEmpat){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 60 &&  usiaFix <=69  && tensiFix > 180 && kolesterol == indexLima){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //==================== 61 - 65
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexTiga){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexEmpat){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 120 && tensiFix <=139 && kolesterol == indexLima){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }
+//
+//                //======================= 66 - 70
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexSatu){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexDua){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexTiga){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexEmpat){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <=159 && kolesterol == indexLima){
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }
+//
+//                //====================== 71 - 75
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexSatu){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexDua){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexTiga){
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexEmpat){
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <=179 && kolesterol == indexLima){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //================ 76 - 80
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexSatu){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70  && tensiFix >= 180 && kolesterol == indexDua){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexTiga){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexEmpat){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Tidak" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexLima){
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //####################### T A B L E  !D I A B E T E S  && !NON - P E R O K O K && WANITA ||| DONE #######################################################33
+//                //####################### T A B L E  !D I A B E T E S  && !NON - P E R O K O K && WANITA ||| DONE #######################################################33
+//
+//                //:::::::::::::::::::::::::::::::::::::::; !DIABETES && PEROKOK && WANITA  ;::::::::::::::::::::::::::::::::::::::::::::::::://
+//
+//                //==========================> 1 - 5
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima){
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }
+//
+//                //==========================> 6 - 10
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu){
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Kurang Aman";
+//                }
+//
+//                //=========================> 11 - 15
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //========================== 16 - 20
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexSatu) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 0 && usiaFix <= 49 && tensiFix >= 180  && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //========================= 21 - 25
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139  && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }
+//
+//                //====================== 26 - 30
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }
+//
+//                //====================== 31 - 35
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //======================= 36 - 40
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexSatu) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 50 && usiaFix <= 59 && tensiFix >= 180 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //======================= 41 - 45
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+//                    hasil = "< 10 %";
+//                    tingkat = "Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }
+//
+//                //====================== 46 - 50
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //====================== 51 - 55
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //===================== 56 - 60
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexSatu) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 60 && usiaFix <= 69 && tensiFix >= 180 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //=================== 61 - 65
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexSatu) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexDua) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexTiga) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexEmpat) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 0 && tensiFix <= 139 && kolesterol == indexLima) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }
+//
+//                //==================== 66 - 70
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexSatu) {
+//                    hasil = "10 % to < 20 %";
+//                    tingkat = "Lumayan Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexDua) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexTiga) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexEmpat) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 140 && tensiFix <= 159 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //===================== 71 - 75
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexSatu) {
+//                    hasil = "20 % to < 30 %";
+//                    tingkat = "Kurang Aman";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexDua) {
+//                    hasil = "30 % to < 40 %";
+//                    tingkat = "Lumayan Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 160 && tensiFix <= 179 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }
+//
+//                //================= 76 - 80
+//                else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexSatu) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexDua) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexTiga) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexEmpat) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//                }else if (ApaDiabetes == "Iya" && ApaKelamin == "Wanita" && ApaRokok == "Iya" && usiaFix >= 70 && tensiFix >= 180 && kolesterol == indexLima) {
+//                    hasil = "> 40 %";
+//                    tingkat = "Bahaya";
+//
+//                }
+                //####################### T A B L E  !D I A B E T E S  && P E R O K O K && WANITA ||| DONE #######################################################33
+                //####################### T A B L E  !D I A B E T E S  && P E R O K O K && WANITA ||| DONE #######################################################33
 
 
-                //####################### T A B L E  !D I A B E T E S  && !P E R O K O K ||| DONE #######################################################33
-                //####################### T A B L E  !D I A B E T E S  && !P E R O K O K ||| DONE #######################################################33
 
 
-
-
-                Diagnosa diagnosa = new Diagnosa(tanggal, ApaDiabetes, ApaKelamin, ApaRokok, usia, tensi, kolesterol, hasil);
-
+                Diagnosa diagnosa = new Diagnosa(
+                        tanggal, ApaDiabetes, ApaKelamin, ApaRokok, usia, tensi, kolesterol, hasil, tingkat, saran1, saranDiabetes, saranFaktor, saranKolesterol, saranTensi, saranRokok);
 
                 userIdRef.document(userID).collection("Diagnosa").add(diagnosa);
 
@@ -471,6 +2838,13 @@ public class CreateDiagnosaActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(CreateDiagnosaActivity.this, HasilDiagnosaJantungActivity.class);
                 intent.putExtra("hasils", hasil);
+                intent.putExtra("tingkats", tingkat);
+                intent.putExtra("saranssatu", saran1);
+                intent.putExtra("sarandiabetess", saranDiabetes);
+                intent.putExtra("saranFaktors", saranFaktor);
+                intent.putExtra("saranKolesterols", saranKolesterol);
+                intent.putExtra("saranTensis", saranTensi);
+                intent.putExtra("saranRokoks",saranRokok);
                 startActivity(intent);
 
 

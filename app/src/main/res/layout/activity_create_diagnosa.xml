@@ -7,6 +7,12 @@
     android:background="@drawable/gradienttwo"
     tools:context=".CreateDiagnosaActivity">
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/viewone"
+        android:visibility="visible">
+
     <LinearLayout
         android:id="@+id/linear_formTitle"
         android:layout_width="match_parent"
@@ -252,4 +258,20 @@
 
         </LinearLayout>
     </ScrollView>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/viewtwo"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/texthasil"/>
+
+    </RelativeLayout>
+
 </RelativeLayout>

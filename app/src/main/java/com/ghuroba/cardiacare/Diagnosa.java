@@ -15,13 +15,68 @@ public class Diagnosa {
     private String tensi;
     private String kolesterol;
     private String hasil;
+    private String tingkat;
+    private String saran1;
+    private String saranDiabetes;
+    private String saranFaktor;
+    private String saranKolesterol;
+    private String saranTensi;
+    private String saranRokok;
 
     public Diagnosa(){
 
     }
 
+    public String getSaran1() {
+        return saran1;
+    }
+
+    public void setSaran1(String saran1) {
+        this.saran1 = saran1;
+    }
+
+    public String getSaranDiabetes() {
+        return saranDiabetes;
+    }
+
+    public void setSaranDiabetes(String saranDiabetes) {
+        this.saranDiabetes = saranDiabetes;
+    }
+
+    public String getSaranFaktor() {
+        return saranFaktor;
+    }
+
+    public void setSaranFaktor(String saranFaktor) {
+        this.saranFaktor = saranFaktor;
+    }
+
+    public String getSaranKolesterol() {
+        return saranKolesterol;
+    }
+
+    public void setSaranKolesterol(String saranKolesterol) {
+        this.saranKolesterol = saranKolesterol;
+    }
+
+    public String getSaranTensi() {
+        return saranTensi;
+    }
+
+    public void setSaranTensi(String saranTensi) {
+        this.saranTensi = saranTensi;
+    }
+
+    public String getSaranRokok() {
+        return saranRokok;
+    }
+
+    public void setSaranRokok(String saranRokok) {
+        this.saranRokok = saranRokok;
+    }
+
     public Diagnosa(Calendar tanggal, String rbD, String rbK, String rbR, String usia,
-                    String tensi, String kolesterol, String hasill) {
+                    String tensi, String kolesterol, String hasill, String tingkat, String saran1, String saranDiabetes, String saranFaktor, String saranKolesterol, String saranTensi, String saranRokok) {
         this.tanggal = tanggal;
         this.diabetes = rbD;
         this.kelamin = rbK;
@@ -30,6 +85,13 @@ public class Diagnosa {
         this.tensi = tensi;
         this.kolesterol = kolesterol;
         this.hasil = hasill;
+        this.tingkat = tingkat;
+        this.saran1 = saran1;
+        this.saranDiabetes = saranDiabetes;
+        this.saranFaktor = saranFaktor;
+        this.saranKolesterol = saranKolesterol;
+        this.saranTensi = saranTensi;
+        this.saranRokok = saranRokok;
     }
 
     public Calendar getTanggal() {
@@ -106,6 +168,15 @@ public class Diagnosa {
     }
 
     public void setHasil(String hasil) {
-        this.hasil = hasil;
+        this.tingkat = tingkat;
+    }
+
+    public String getTingkat() {
+
+        return tingkat;
+    }
+
+    public void setTingkat(String tingkat) {
+        this.tingkat = tingkat;
     }
 }
