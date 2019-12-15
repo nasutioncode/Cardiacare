@@ -7,16 +7,6 @@
     android:background="@drawable/gradienttwo"
     android:padding="5dp"
     android:layout_gravity="center">
-    <!--    <Button-->
-    <!--        android:id="@+id/txtclose"-->
-    <!--        android:layout_width="30dp"-->
-    <!--        android:layout_height="30dp"-->
-    <!--        android:textColor="#000"-->
-    <!--        android:text="X"-->
-    <!--        android:textStyle="bold"-->
-    <!--        android:layout_gravity="end"-->
-    <!--        android:gravity="center"-->
-    <!--        android:background="@color/colorAccent"/>-->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -81,35 +71,6 @@
         android:paddingLeft="60dp"
         android:hint="Nama"
         android:textColorHint="#d0d0d0"/>
-
-    <EditText
-        android:id="@+id/email"
-        android:layout_width="match_parent"
-        android:layout_height="62dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:background="@drawable/emailregis"
-        android:paddingLeft="60dp"
-        android:hint="Email"
-        android:textColorHint="#d0d0d0"
-        android:inputType="textEmailAddress" />
-
-
-    <EditText
-        android:id="@+id/password"
-        android:layout_width="match_parent"
-        android:layout_height="62dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:background="@drawable/passwordregis"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:paddingLeft="60dp"
-        android:textColorHint="#d0d0d0"/>
-
-
 
 
     <Button

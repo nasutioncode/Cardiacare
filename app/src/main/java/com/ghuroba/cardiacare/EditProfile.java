@@ -77,18 +77,12 @@ public class EditProfile extends AppCompatActivity {
     }
 
     private void saveUserProfile() {
-        String displayName = txt_nama.getText().toString();
-        String displayEmail = txt_email.getText().toString();
+        String displayNames = txt_nama.getText().toString();
+        String displayEmails = txt_email.getText().toString();
 
-        if (displayName.isEmpty()) {
+        if (displayNames.isEmpty()) {
             txt_nama.setError("Nama Required");
             txt_nama.requestFocus();
-            return;
-        }
-
-        if (displayEmail.isEmpty()) {
-            txt_email.setError("Email Required");
-            txt_email.requestFocus();
             return;
         }
 
@@ -96,8 +90,8 @@ public class EditProfile extends AppCompatActivity {
 
         if (user != null && profilImageUri != null) {
             UserProfileChangeRequest profile = new UserProfileChangeRequest.Builder()
-                    .setDisplayName(displayName)
-                    //.setDisplayEmail(displayEmail)
+                    .setDisplayName(displayNames)
+                   // .setDisplayEmail(displayEmails)
                     .setPhotoUri(Uri.parse(profilImageUri))
                     .build();
 
@@ -106,8 +100,8 @@ public class EditProfile extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             Toast.makeText(EditProfile.this, "Profile Updated", Toast.LENGTH_SHORT).show();
-//                            Intent toProfilFragment = new Intent(context, ProfilFragment.class);
-//                            startActivity(toProfilFragment);
+                            Intent toProfilFragment = new Intent(context, ProfilFragment.class);
+                            startActivity(toProfilFragment);
                         }
                     });
         }
@@ -135,18 +129,20 @@ public class EditProfile extends AppCompatActivity {
     }
 
     private void uploadImageToFirebaseStorage() {
+
+
         StorageReference storageReference =
                 FirebaseStorage.getInstance().getReference("profilepics/" + System.currentTimeMillis() + ".jpg");
 
         if (uriProfilImage != null) {
 
-            progressBar.setVisibility(View.VISIBLE);
+           // progressBar.setVisibility(View.VISIBLE);
 
             storageReference.putFile(uriProfilImage)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            progressBar.setVisibility(View.GONE);
+                           // progressBar.setVisibility(View.GONE);
                             profilImageUri = taskSnapshot.getMetadata().getReference().getDownloadUrl().toString();
 
                         }

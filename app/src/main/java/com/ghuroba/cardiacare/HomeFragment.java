@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ViewFlipper;
 
 public class HomeFragment extends Fragment {
 
@@ -18,11 +20,24 @@ public class HomeFragment extends Fragment {
     CardView history_card;
     Activity context;
     Button butt;
+    ViewFlipper viewFlipper;
 
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        int image[]  = {R.drawable.slide1, R.drawable.slide2, R.drawable.slide3};
+
+        viewFlipper = (ViewFlipper) context.findViewById(R.id.Vflipper);
+
+//        for (int i=0; i<image.length; i++) {
+//            flipperImage(image[i]);
+//        }
+
+        for (int images : image) {
+            flipperImage(images);
+        }
 
         diagnosa_card = (CardView) context.findViewById(R.id.diag_card);
         history_card = (CardView) context.findViewById(R.id.his_card);
@@ -54,10 +69,20 @@ public class HomeFragment extends Fragment {
     }
 
 
-
-
     public void onStart() {
         super.onStart();
+
+        int image[]  = {R.drawable.slide1, R.drawable.slide2, R.drawable.slide3};
+
+        viewFlipper = (ViewFlipper) context.findViewById(R.id.Vflipper);
+
+//        for (int i=0; i<image.length; i++) {
+//            flipperImage(image[i]);
+//        }
+
+        for (int images : image) {
+            flipperImage(images);
+        }
 
 //        diagnosa_card = (CardView) context.findViewById(R.id.diag_card);
 //        history_card = (CardView) context.findViewById(R.id.his_card);
@@ -79,6 +104,19 @@ public class HomeFragment extends Fragment {
 //        });
 
 
+
+    }
+
+    public void flipperImage(int image) {
+        ImageView imageView = new ImageView(context);
+        imageView.setBackgroundResource(image);
+
+        viewFlipper.addView(imageView);
+        viewFlipper.setFlipInterval(4000);
+        viewFlipper.setAutoStart(true);
+
+        viewFlipper.setInAnimation(context, android.R.anim.slide_in_left);
+        viewFlipper.setOutAnimation(context, android.R.anim.slide_out_right);
     }
 
 

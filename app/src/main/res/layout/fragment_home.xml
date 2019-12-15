@@ -7,12 +7,39 @@
     android:background="#FFF">
 
 
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:id="@+id/cardone"
+        app:cardCornerRadius="10dp"
+        android:layout_marginTop="20dp"
+        app:cardElevation="20dp"
+        android:layout_marginRight="17dp"
+        android:layout_marginLeft="17dp">
+
+        <ViewFlipper
+            android:id="@+id/Vflipper"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginLeft="12dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginRight="12dp">
+
+
+        </ViewFlipper>
+
+    </androidx.cardview.widget.CardView>
+
+
+
+
 
     <androidx.cardview.widget.CardView
+        android:layout_below="@id/cardone"
         android:layout_width="47dp"
         android:layout_height="73dp"
         android:layout_marginLeft="12dp"
-        android:layout_marginTop="29dp"
+        android:layout_marginTop="59dp"
         app:cardCornerRadius="10dp"
         app:cardElevation="80dp">
 
@@ -28,10 +55,11 @@
 
 
     <androidx.cardview.widget.CardView
+        android:layout_below="@id/cardone"
         android:id="@+id/diag_card"
         android:layout_width="match_parent"
         android:layout_height="140dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="50dp"
         android:layout_marginRight="20dp"
         android:layout_marginLeft="40dp"
         app:cardCornerRadius="10dp"

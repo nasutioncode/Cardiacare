@@ -17,22 +17,29 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import static androidx.constraintlayout.widget.Constraints.TAG;
 
 //import static androidx.constraintlayout.Constraints.TAG;
 
 public class ProfilFragment extends Fragment {
+
+    private static final String KEY_NAMA = "nama";
+    private static final String KEY_EMAIL = "email";
 
     private static final int CHOOSE_IMAGE = 101;
     Button bt_logout, bt_edit, bt_delete, bt_baca;
@@ -52,6 +59,13 @@ public class ProfilFragment extends Fragment {
 
 
     private FirebaseUser uid = FirebaseAuth.getInstance().getCurrentUser();
+
+
+    private FirebaseAuth fAuth = FirebaseAuth.getInstance();
+    private FirebaseFirestore FSdatabase = FirebaseFirestore.getInstance();
+    private CollectionReference userIdRef = FSdatabase.collection("UserInfo");
+
+    private String userID;
 
     @Nullable
     @Override
@@ -76,6 +90,8 @@ public class ProfilFragment extends Fragment {
         //foto = (ImageView)context.findViewById(R.id.profilPhoto);
         imageView = (ImageView)context.findViewById(R.id.profilPhoto);
         progressBar = (ProgressBar)context.findViewById(R.id.progresBar);
+
+
 
 
 
@@ -122,23 +138,25 @@ public class ProfilFragment extends Fragment {
             }
         });
 
-//        bt_baca.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                loadUserInformation();
-//            }
-//        });
 
         loadUserInformation();
     }
 
 
     private void loadUserInformation() {
+
+//        userID = fAuth.getCurrentUser().getUid();
+//        CollectionReference diagnosaRef = userIdRef;
+
+
+
+
+
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user != null) {
             if (user.getPhotoUrl() != null) {
-                Glide.with(ProfilFragment.this)
+                Glide.with(getActivity())
                         .load(user.getPhotoUrl().toString())
                         .into(imageView);
             }
@@ -179,23 +197,6 @@ public class ProfilFragment extends Fragment {
 
         // [END delete_user]
     }
-
-
-    public void getUserProfile() {
-        // [START get_user_profile]
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        String info = user.getUid();
-
-        if (user != null) {
-            // Name, email address, and profile photo Url
-            String name = user.getDisplayName();
-            String email = user.getEmail();
-            Uri foto = user.getPhotoUrl();
-
-            // Check if user's email is verified
-            String uid = user.getUid();
-        }
-        // [END get_user_profile]
-    }
+    
 
 }

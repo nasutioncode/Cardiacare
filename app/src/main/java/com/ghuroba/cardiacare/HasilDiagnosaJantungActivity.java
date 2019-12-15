@@ -2,6 +2,7 @@ package com.ghuroba.cardiacare;
 
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -42,6 +43,17 @@ public class HasilDiagnosaJantungActivity extends AppCompatActivity {
         TextView saranSatu = (TextView) findViewById(R.id.saransatu);
 
 
+        String hasil = hasilIntent.getText().toString();
+
+
+        if (hasil.equals("< 10 %")) {
+            hasilIntent.setTextColor(Color.RED);
+        }
+
+
+
+
+
         Button btn_detail = (Button) findViewById(R.id.button_hasilDetail);
 
 
@@ -71,6 +83,7 @@ public class HasilDiagnosaJantungActivity extends AppCompatActivity {
             saranTensi.setText(getIntent().getStringExtra("saranTensis"));
             saranRokok.setText(getIntent().getStringExtra("saranRokoks"));
             saranSatu.setText(getIntent().getStringExtra("saranssatu"));
+
         }
 
         btn_detail.setOnClickListener(new View.OnClickListener() {
