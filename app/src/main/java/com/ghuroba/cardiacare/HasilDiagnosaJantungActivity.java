@@ -47,7 +47,7 @@ public class HasilDiagnosaJantungActivity extends AppCompatActivity {
 
 
         if (hasil.equals("< 10 %")) {
-            hasilIntent.setTextColor(Color.RED);
+            hasilIntent.setTextColor(Color.GREEN);
         }
 
 
