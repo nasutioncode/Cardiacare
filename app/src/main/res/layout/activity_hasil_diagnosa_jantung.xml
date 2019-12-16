@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginTop="30dp">
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="10dp">
 
         <TextView
             android:id="@+id/title_hasilJantung"
@@ -25,23 +26,6 @@
             android:textSize="20dp"
             android:textStyle="bold" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="102dp"
-            android:orientation="horizontal"
-            android:padding="5dp">
-
-            <TextView
-                android:id="@+id/label_hasilDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
-                android:text="@string/label_formDate"
-                android:textColor="#b20a2c"
-                android:textSize="16dp"
-                android:textStyle="bold" />
-
             <TextView
                 android:id="@+id/date_hasilJantung"
                 android:layout_width="match_parent"
@@ -49,339 +33,364 @@
                 android:text="@string/date_hasilJantung"
                 android:textColor="#355C7D"
                 android:textSize="14dp"
+                android:textAlignment="center"
                 android:textStyle="bold" />
-
-        </LinearLayout>
 
     </LinearLayout>
 
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardview"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:layout_marginTop="20dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/linear_hasilTitle"
-        app:cardCornerRadius="10dp"
-        app:cardMaxElevation="10dp">
-
+        android:layout_below="@+id/linear_hasilTitle">
 
         <LinearLayout
-            android:id="@+id/linear_hasilRisiko"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/linear_hasilTitle"
-            android:layout_marginLeft="60dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="60dp"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/label_hasilRisiko"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Tingkat Risiko"
-                android:textColor="#000000"
-                android:textSize="20dp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/text_hasilRisiko"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/text_hasilRisiko"
-                android:textColor="@android:color/holo_green_dark"
-                android:textSize="20dp"
-                android:layout_marginBottom="10dp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-
-
-    </androidx.cardview.widget.CardView>
-
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardviewKedua"
-        android:layout_width="match_parent"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:layout_marginTop="20dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/cardview"
-        app:cardCornerRadius="10dp"
-        app:cardMaxElevation="10dp">
-
-
-        <LinearLayout
-            android:id="@+id/linear_hasilRisiko_kategori"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardview"
             android:layout_width="match_parent"
+            android:layout_marginLeft="40dp"
+            android:layout_marginRight="40dp"
+            android:layout_marginTop="20dp"
             android:layout_height="wrap_content"
             android:layout_below="@+id/linear_hasilTitle"
-            android:layout_marginLeft="60dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="60dp"
-            android:orientation="vertical"
-            android:layout_marginBottom="10dp">
+            app:cardCornerRadius="10dp"
+            app:cardMaxElevation="10dp">
 
-            <TextView
-                android:id="@+id/label_penejelasan1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Kategori Resiko"
-                android:textColor="#000000"
-                android:textSize="20dp"
-                android:layout_gravity="center"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tingkat_resiko"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/text_hasilPenjelasan"
-                android:textColor="@android:color/holo_green_dark"
-                android:textSize="20dp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardviewKetiga"
-        android:layout_width="match_parent"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:layout_marginTop="20dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/cardviewKedua"
-        app:cardCornerRadius="10dp"
-        app:cardMaxElevation="10dp">
-
-
-        <LinearLayout
-            android:id="@+id/saran"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/linear_hasilTitle"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical"
-            android:layout_marginBottom="10dp">
-
-            <TextView
-                android:id="@+id/saran1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Saran"
-                android:textColor="#000000"
-                android:textSize="20dp"
-                android:layout_gravity="center"
-                android:textStyle="bold" />
 
             <LinearLayout
+                android:id="@+id/linear_hasilRisiko"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_below="@+id/linear_hasilTitle"
+                android:layout_marginLeft="60dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="60dp"
+                android:orientation="vertical">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/label_hasilRisiko"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_weight="2"
-                    android:layout_marginLeft="17dp">
+                    android:gravity="center"
+                    android:text="Tingkat Risiko"
+                    android:textColor="#000000"
+                    android:textSize="20dp"
+                    android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Jika Diabetes "
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Saran Faktor "
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/text_hasilRisiko"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/text_hasilRisiko"
+                    android:textColor="@android:color/holo_green_dark"
+                    android:textSize="20dp"
+                    android:layout_marginBottom="10dp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Jika Kolesterol "
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Jika Tensi "
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Jika Perokok"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
 
-                </LinearLayout>
 
-                <LinearLayout
+        </androidx.cardview.widget.CardView>
+
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardviewKedua"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="40dp"
+            android:layout_marginRight="40dp"
+            android:layout_marginTop="20dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/cardview"
+            app:cardCornerRadius="10dp"
+            app:cardMaxElevation="10dp">
+
+
+            <LinearLayout
+                android:id="@+id/linear_hasilRisiko_kategori"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/linear_hasilTitle"
+                android:layout_marginLeft="60dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="60dp"
+                android:orientation="vertical"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:id="@+id/label_penejelasan1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginRight="0dp">
+                    android:text="Kategori Resiko"
+                    android:textColor="#000000"
+                    android:textSize="20dp"
+                    android:layout_gravity="center"
+                    android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text=" : "
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text=" : "
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tingkat_resiko"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/text_hasilPenjelasan"
+                    android:textColor="@android:color/holo_green_dark"
+                    android:textSize="20dp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text=" :  "
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text=" : "
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text=" : "
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
+        </androidx.cardview.widget.CardView>
 
-                </LinearLayout>
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardviewKetiga"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/cardviewKedua"
+            app:cardCornerRadius="10dp"
+            app:cardMaxElevation="10dp">
+
+
+            <LinearLayout
+                android:id="@+id/saran"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/linear_hasilTitle"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:id="@+id/saran1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Informasi &amp; Saran"
+                    android:textColor="#000000"
+                    android:textSize="20dp"
+                    android:layout_gravity="center"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="10dp"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginRight="20dp"
-                    android:layout_weight="1">
+                    android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/sarandiabtes"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/text_hasilPenjelasan"
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:id="@+id/saranfaktor"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/text_hasilPenjelasan"
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical"
+                        android:layout_weight="2.5"
+                        android:layout_marginLeft="17dp">
 
-                    <TextView
-                        android:id="@+id/sarankolestrol"
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Diabetes "
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Rokok"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Tekanan darah "
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Kolesterol "
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Faktor Pencetus "
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginRight="0dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=" : "
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=" : "
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="10dp"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=" :  "
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="10dp"/>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=" : "
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="10dp"/>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=" : "
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="10dp"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/text_hasilPenjelasan"
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:id="@+id/sarantensi"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/text_hasilPenjelasan"
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:id="@+id/saranrokok"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/text_hasilPenjelasan"
-                        android:textColor="@android:color/holo_green_dark"
-                        android:textSize="10dp"
-                        android:textStyle="bold"/>
+                        android:orientation="vertical"
+                        android:layout_marginRight="20dp"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:id="@+id/sarandiabtes"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/text_hasilPenjelasan"
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+                        <TextView
+                            android:id="@+id/saranrokok"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/text_hasilPenjelasan"
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+                        <TextView
+                            android:id="@+id/sarantensi"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/text_hasilPenjelasan"
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+                        <TextView
+                            android:id="@+id/sarankolestrol"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/text_hasilPenjelasan"
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+                        <TextView
+                            android:id="@+id/saranfaktor"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/text_hasilPenjelasan"
+                            android:textColor="@android:color/holo_green_dark"
+                            android:textSize="10dp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="10dp"/>
+
+                    </LinearLayout>
+
+
 
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/saransatu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/text_hasilPenjelasan"
+                    android:textColor="@android:color/holo_green_dark"
+                    android:textSize="14dp"
+                    android:background="#d0f0f0"
+                    android:gravity="center"
+                    android:layout_marginRight="17dp"
+                    android:layout_marginLeft="17dp"
+                    android:layout_marginTop="10dp"
+                    android:textStyle="bold"/>
+
 
 
 
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/saransatu"
+        </androidx.cardview.widget.CardView>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/text_hasilPenjelasan"
-                android:textColor="@android:color/holo_green_dark"
-                android:textSize="10dp"
-                android:background="#d0f0f0"
-                android:gravity="center"
-                android:layout_marginRight="17dp"
-                android:layout_marginLeft="17dp"
-                android:layout_marginTop="10dp"
-                android:textStyle="bold"/>
+                android:padding="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginLeft="20dp"
+                android:orientation="vertical"
+                android:layout_below="@id/cardviewKetiga" >
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_hasilPenjelasan2"
+                    android:textColor="#000000"
+                    android:textSize="12dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_gravity="center"
+                    android:textStyle="bold" />
 
+                <Button
+                    android:id="@+id/button_hasilDetail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/btn_rounded"
+                    android:padding="10dp"
+                    android:text="@string/button_hasilDetail"
+                    android:textSize="17dp"
+                    android:textColor="#ffffff"
+                    android:textStyle="bold" />
 
+            </LinearLayout>
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="20dp"
-            android:layout_marginRight="20dp"
-            android:layout_marginLeft="20dp"
-            android:orientation="vertical"
-            android:layout_below="@id/cardviewKetiga" >
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_hasilPenjelasan2"
-                android:textColor="#000000"
-                android:textSize="12dp"
-                android:layout_marginTop="30dp"
-                android:layout_gravity="center"
-                android:layout_marginBottom="-30dp"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/button_hasilDetail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="70dp"
-                android:background="@drawable/btn_rounded"
-                android:padding="10dp"
-                android:text="@string/button_hasilDetail"
-                android:textSize="17dp"
-                android:textColor="#ffffff"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
+    </ScrollView>
 
 </RelativeLayout>
